@@ -5,3 +5,6 @@
 *.obj
 *.ilk
 *.pdb
+
+compile_flags.txt
+*.svg
