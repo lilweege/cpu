@@ -1,5 +1,5 @@
 # cpu
-A RISC-V emulator
+A 32-bit RISC-V emulator
 
 ![screenshot](https://github.com/lilweege/cpu/assets/59585724/234ace56-e7f2-4e93-a2f2-8279b0193642)
 
