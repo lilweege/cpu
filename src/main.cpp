@@ -9,7 +9,6 @@
 
 
 CPU cpu{};
-RegisterFile regsLastIns{};
 
 
 static void TestDecode()
@@ -262,6 +261,7 @@ static void TestISA()
         "riscv-tests/isa/rv32ui-p-xor",
         "riscv-tests/isa/rv32ui-p-xori",
     };
+    int numFailed = 0;
     size_t numTests = sizeof(testNames) / sizeof(testNames[0]);
     for (size_t i = 0; i < numTests; ++i) {
         const char* testName = testNames[i];
@@ -269,18 +269,23 @@ static void TestISA()
         {
             std::ifstream input(testName, std::ios::binary);
             std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
-            cpu.InitializeFromELF(buffer.data(), buffer.size());
+            bool initOk = cpu.InitializeFromELF(buffer.data(), buffer.size());
+            assert(initOk);
         }
 
         while (cpu.Step());
 
         uint32_t result = cpu.intRegs.Read(10);
         printf("Test %s: ", testName);
-        if (result != 0)
+        if (result != 0) {
             printf("FAILED (%d)\n", result);
-        else
+            ++numFailed;
+        }
+        else {
             printf("PASSED\n");
+        }
     }
+    assert(numFailed == 0);
 }
 
 
@@ -382,9 +387,9 @@ static void DebugRestartButtonPressed()
 
 static void DebugStepOverButtonPressed()
 {
-    regsLastIns = cpu.intRegs;
+    memset(cpu.intRegs.didChange, false, cpu.intRegs.NumRegs);
+    memset(cpu.memory.didChange, false, cpu.memory.MemSize);
     cpu.Step();
-    printf("DebugStepOverButtonPressed!\n");
 }
 
 static void DebugStepIntoButtonPressed()
@@ -397,24 +402,29 @@ static void DebugStepOutButtonPressed()
     printf("DebugStepOutButtonPressed!\n");
 }
 
+static bool MemoryHighlightFn(const ImU8* data, size_t off)
+{
+    return cpu.memory.didChange[off];
+}
+    
 
 int main(int, char**)
 {
     // TestDecode();
     // TestISA();
 
-    uint32_t maxWord = 1024*1024/32;
-    std::vector<FormattedInstruction> readableObjectCode;
-    readableObjectCode.reserve(maxWord);
+    std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
+    readableObjectCode.reserve(cpu.memory.MemSize);
     cpu.Reset();
     {
-        std::ifstream input("riscv-tests/isa/rv32ui-p-sltiu", std::ios::binary);
+        std::ifstream input("test/a.out", std::ios::binary);
         std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
         cpu.InitializeFromELF(buffer.data(), buffer.size());
 
-        for (uint32_t i = 0; i+3 < maxWord; i += 4) {
+        for (uint32_t i = 0; i+4 <= cpu.memory.MemSize; i += 4) {
             uint32_t word = cpu.memory.Read<uint32_t>(i);
-            readableObjectCode.push_back(FormatInstruction(word));
+            if (DecodeInstruction(word) != InstructionType::ILLEGAL)
+                readableObjectCode.push_back({i, FormatInstruction(word)});
         }
     }
 
@@ -472,6 +482,14 @@ int main(int, char**)
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+    
+
+    uint32_t lastPc = 0;
+    ImU32 highlightColor = IM_COL32(255, 0, 0, 255);
+    MemoryEditor memEdit;
+    memEdit.ReadOnly = true;
+    memEdit.HighlightFn = MemoryHighlightFn;
+    memEdit.HighlightColor = highlightColor;
 
     while (!glfwWindowShouldClose(window)) {
         // Poll and handle events (inputs, window resize, etc.)
@@ -497,14 +515,15 @@ int main(int, char**)
             ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-            ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground);
+            if (ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground)) {
                 ImGuiID dockspaceID = ImGui::GetID("DockSpace");
                 ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+            }
             ImGui::End();
             ImGui::PopStyleVar(3);
 
 
-            ImGui::Begin("Buttons");
+            if (ImGui::Begin("Buttons")) {
                 for (size_t i = 0; i < numButtons; ++i) {
                     const Button& btn = buttons[i];
                     if (ImGui::ImageButton(btn.texture.id, ImVec2(32, 32))) {
@@ -512,23 +531,26 @@ int main(int, char**)
                     }
                     ImGui::SameLine();
                 }
+            }
             ImGui::End();
 
-            ImGui::Begin("Code");
-                for (uint32_t i = 0; i < readableObjectCode.size(); ++i) {
-                    if (i*4 == cpu.pc) ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-                    ImGui::Text("%08X: %s", i*4, readableObjectCode[i].buffer);
-                    if (i*4 == cpu.pc) ImGui::PopStyleColor();
+            if (ImGui::Begin("Code")) {
+                for (const auto& [addr, instruction] : readableObjectCode) {
+                    bool isCurrentInstruction = addr == cpu.pc;
+                    if (isCurrentInstruction) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
+                    ImGui::Text("%08X: %s", addr, instruction.buffer);
+                    if (isCurrentInstruction) ImGui::PopStyleColor();
                 }
+            }
             ImGui::End();
             
-            ImGui::Begin("Registers");
-                for (uint32_t i = 0; i < 32; ++i) {
+            if (ImGui::Begin("Registers")) {
+                for (uint32_t i = 0; i < cpu.intRegs.NumRegs; ++i) {
                     uint32_t x = cpu.intRegs.Read(i);
-                    uint32_t px = regsLastIns.Read(i);
-                    if (x != px) ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+                    bool didChange = cpu.intRegs.didChange[i];
+                    if (didChange) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
                     ImGui::Text("%*sx%u: %02X %02X %02X %02X  (%d)\n", i < 10, "", i, (x >> 24) & 0xFF, (x >> 16) & 0xFF, (x >> 8) & 0xFF, (x >> 0) & 0xFF, x);
-                    if (x != px) ImGui::PopStyleColor();
+                    if (didChange) ImGui::PopStyleColor();
                 }
                 
                 ImGui::Text("\n pc: %02X %02X %02X %02X  (%d)\n",
@@ -536,13 +558,14 @@ int main(int, char**)
                     (cpu.pc >> 16) & 0xFF,
                     (cpu.pc >> 8) & 0xFF,
                     (cpu.pc >> 0) & 0xFF, cpu.pc);
-                
+            }
             ImGui::End();
 
-            static MemoryEditor mem_edit;
-            mem_edit.ReadOnly = true;
-            mem_edit.DrawWindow("Memory", cpu.memory.Buffer(), 1024*1024);
-
+            memEdit.DrawWindow("Memory", cpu.memory.buffer, cpu.memory.MemSize);
+            if (lastPc != cpu.pc) {
+                memEdit.GotoAddrAndHighlight(cpu.pc, cpu.pc+4);
+                lastPc = cpu.pc;
+            }
             // ...
         }
 

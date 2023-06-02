@@ -21,323 +21,638 @@ FormattedInstruction FormatInstruction(RawInstruction ins)
     return result;
 }
 
+#define CSR_cycle          0xc00
+#define CSR_cycleh         0xc80
+#define CSR_dcsr           0x7b0
+#define CSR_dpc            0x7b1
+#define CSR_dscratch0      0x7b2
+#define CSR_dscratch1      0x7b3
+#define CSR_fcsr           0x003
+#define CSR_fflags         0x001
+#define CSR_frm            0x002
+#define CSR_hcounteren     0x606
+#define CSR_hedeleg        0x602
+#define CSR_hgatp          0x680
+#define CSR_hgeie          0x607
+#define CSR_hgeip          0xe07
+#define CSR_hideleg        0x603
+#define CSR_hie            0x604
+#define CSR_hip            0x644
+#define CSR_hpmcounter3    0xc03
+#define CSR_hpmcounter4    0xc04
+#define CSR_hpmcounter5    0xc05
+#define CSR_hpmcounter6    0xc06
+#define CSR_hpmcounter7    0xc07
+#define CSR_hpmcounter8    0xc08
+#define CSR_hpmcounter9    0xc09
+#define CSR_hpmcounter10   0xc0a
+#define CSR_hpmcounter11   0xc0b
+#define CSR_hpmcounter12   0xc0c
+#define CSR_hpmcounter13   0xc0d
+#define CSR_hpmcounter14   0xc0e
+#define CSR_hpmcounter15   0xc0f
+#define CSR_hpmcounter16   0xc10
+#define CSR_hpmcounter17   0xc11
+#define CSR_hpmcounter18   0xc12
+#define CSR_hpmcounter19   0xc13
+#define CSR_hpmcounter20   0xc14
+#define CSR_hpmcounter21   0xc15
+#define CSR_hpmcounter22   0xc16
+#define CSR_hpmcounter23   0xc17
+#define CSR_hpmcounter24   0xc18
+#define CSR_hpmcounter25   0xc19
+#define CSR_hpmcounter26   0xc1a
+#define CSR_hpmcounter27   0xc1b
+#define CSR_hpmcounter28   0xc1c
+#define CSR_hpmcounter29   0xc1d
+#define CSR_hpmcounter30   0xc1e
+#define CSR_hpmcounter31   0xc1f
+#define CSR_hpmcounter3h   0xc83
+#define CSR_hpmcounter4h   0xc84
+#define CSR_hpmcounter5h   0xc85
+#define CSR_hpmcounter6h   0xc86
+#define CSR_hpmcounter7h   0xc87
+#define CSR_hpmcounter8h   0xc88
+#define CSR_hpmcounter9h   0xc89
+#define CSR_hpmcounter10h  0xc8a
+#define CSR_hpmcounter11h  0xc8b
+#define CSR_hpmcounter12h  0xc8c
+#define CSR_hpmcounter13h  0xc8d
+#define CSR_hpmcounter14h  0xc8e
+#define CSR_hpmcounter15h  0xc8f
+#define CSR_hpmcounter16h  0xc90
+#define CSR_hpmcounter17h  0xc91
+#define CSR_hpmcounter18h  0xc92
+#define CSR_hpmcounter19h  0xc93
+#define CSR_hpmcounter20h  0xc94
+#define CSR_hpmcounter21h  0xc95
+#define CSR_hpmcounter22h  0xc96
+#define CSR_hpmcounter23h  0xc97
+#define CSR_hpmcounter24h  0xc98
+#define CSR_hpmcounter25h  0xc99
+#define CSR_hpmcounter26h  0xc9a
+#define CSR_hpmcounter27h  0xc9b
+#define CSR_hpmcounter28h  0xc9c
+#define CSR_hpmcounter29h  0xc9d
+#define CSR_hpmcounter30h  0xc9e
+#define CSR_hpmcounter31h  0xc9f
+#define CSR_hstatus        0x600
+#define CSR_htimedelta     0x605
+#define CSR_htimedeltah    0x615
+#define CSR_htinst         0x64a
+#define CSR_htval          0x643
+#define CSR_instret        0xc02
+#define CSR_instreth       0xc82
+#define CSR_marchid        0xf12
+#define CSR_mbase          0x380
+#define CSR_mbound         0x381
+#define CSR_mcause         0x342
+#define CSR_mcounteren     0x306
+#define CSR_mcountinhibit  0x320
+#define CSR_mcycle         0xb00
+#define CSR_mcycleh        0xb80
+#define CSR_mdbase         0x384
+#define CSR_mdbound        0x385
+#define CSR_medeleg        0x302
+#define CSR_mepc           0x341
+#define CSR_mhartid        0xf14
+#define CSR_mhpmcounter3   0xb03
+#define CSR_mhpmcounter4   0xb04
+#define CSR_mhpmcounter5   0xb05
+#define CSR_mhpmcounter6   0xb06
+#define CSR_mhpmcounter7   0xb07
+#define CSR_mhpmcounter8   0xb08
+#define CSR_mhpmcounter9   0xb09
+#define CSR_mhpmcounter10  0xb0a
+#define CSR_mhpmcounter11  0xb0b
+#define CSR_mhpmcounter12  0xb0c
+#define CSR_mhpmcounter13  0xb0d
+#define CSR_mhpmcounter14  0xb0e
+#define CSR_mhpmcounter15  0xb0f
+#define CSR_mhpmcounter16  0xb10
+#define CSR_mhpmcounter17  0xb11
+#define CSR_mhpmcounter18  0xb12
+#define CSR_mhpmcounter19  0xb13
+#define CSR_mhpmcounter20  0xb14
+#define CSR_mhpmcounter21  0xb15
+#define CSR_mhpmcounter22  0xb16
+#define CSR_mhpmcounter23  0xb17
+#define CSR_mhpmcounter24  0xb18
+#define CSR_mhpmcounter25  0xb19
+#define CSR_mhpmcounter26  0xb1a
+#define CSR_mhpmcounter27  0xb1b
+#define CSR_mhpmcounter28  0xb1c
+#define CSR_mhpmcounter29  0xb1d
+#define CSR_mhpmcounter30  0xb1e
+#define CSR_mhpmcounter31  0xb1f
+#define CSR_mhpmcounter3h  0xb83
+#define CSR_mhpmcounter4h  0xb84
+#define CSR_mhpmcounter5h  0xb85
+#define CSR_mhpmcounter6h  0xb86
+#define CSR_mhpmcounter7h  0xb87
+#define CSR_mhpmcounter8h  0xb88
+#define CSR_mhpmcounter9h  0xb89
+#define CSR_mhpmcounter10h 0xb8a
+#define CSR_mhpmcounter11h 0xb8b
+#define CSR_mhpmcounter12h 0xb8c
+#define CSR_mhpmcounter13h 0xb8d
+#define CSR_mhpmcounter14h 0xb8e
+#define CSR_mhpmcounter15h 0xb8f
+#define CSR_mhpmcounter16h 0xb90
+#define CSR_mhpmcounter17h 0xb91
+#define CSR_mhpmcounter18h 0xb92
+#define CSR_mhpmcounter19h 0xb93
+#define CSR_mhpmcounter20h 0xb94
+#define CSR_mhpmcounter21h 0xb95
+#define CSR_mhpmcounter22h 0xb96
+#define CSR_mhpmcounter23h 0xb97
+#define CSR_mhpmcounter24h 0xb98
+#define CSR_mhpmcounter25h 0xb99
+#define CSR_mhpmcounter26h 0xb9a
+#define CSR_mhpmcounter27h 0xb9b
+#define CSR_mhpmcounter28h 0xb9c
+#define CSR_mhpmcounter29h 0xb9d
+#define CSR_mhpmcounter30h 0xb9e
+#define CSR_mhpmcounter31h 0xb9f
+#define CSR_mhpmevent3     0x323
+#define CSR_mhpmevent4     0x324
+#define CSR_mhpmevent5     0x325
+#define CSR_mhpmevent6     0x326
+#define CSR_mhpmevent7     0x327
+#define CSR_mhpmevent8     0x328
+#define CSR_mhpmevent9     0x329
+#define CSR_mhpmevent10    0x32a
+#define CSR_mhpmevent11    0x32b
+#define CSR_mhpmevent12    0x32c
+#define CSR_mhpmevent13    0x32d
+#define CSR_mhpmevent14    0x32e
+#define CSR_mhpmevent15    0x32f
+#define CSR_mhpmevent16    0x330
+#define CSR_mhpmevent17    0x331
+#define CSR_mhpmevent18    0x332
+#define CSR_mhpmevent19    0x333
+#define CSR_mhpmevent20    0x334
+#define CSR_mhpmevent21    0x335
+#define CSR_mhpmevent22    0x336
+#define CSR_mhpmevent23    0x337
+#define CSR_mhpmevent24    0x338
+#define CSR_mhpmevent25    0x339
+#define CSR_mhpmevent26    0x33a
+#define CSR_mhpmevent27    0x33b
+#define CSR_mhpmevent28    0x33c
+#define CSR_mhpmevent29    0x33d
+#define CSR_mhpmevent30    0x33e
+#define CSR_mhpmevent31    0x33f
+#define CSR_mibase         0x382
+#define CSR_mibound        0x383
+#define CSR_mideleg        0x303
+#define CSR_mie            0x304
+#define CSR_mimpid         0xf13
+#define CSR_minstret       0xb02
+#define CSR_minstreth      0xb82
+#define CSR_mip            0x344
+#define CSR_misa           0x301
+#define CSR_mscratch       0x340
+#define CSR_mstatus        0x300
+#define CSR_mstatush       0x310
+#define CSR_mtinst         0x34a
+#define CSR_mtval          0x343
+#define CSR_mtval2         0x34b
+#define CSR_mtvec          0x305
+#define CSR_mvendorid      0xf11
+#define CSR_pmpaddr0       0x3b0
+#define CSR_pmpaddr1       0x3b1
+#define CSR_pmpaddr2       0x3b2
+#define CSR_pmpaddr3       0x3b3
+#define CSR_pmpaddr4       0x3b4
+#define CSR_pmpaddr5       0x3b5
+#define CSR_pmpaddr6       0x3b6
+#define CSR_pmpaddr7       0x3b7
+#define CSR_pmpaddr8       0x3b8
+#define CSR_pmpaddr9       0x3b9
+#define CSR_pmpaddr10      0x3ba
+#define CSR_pmpaddr11      0x3bb
+#define CSR_pmpaddr12      0x3bc
+#define CSR_pmpaddr13      0x3bd
+#define CSR_pmpaddr14      0x3be
+#define CSR_pmpaddr15      0x3bf
+#define CSR_pmpaddr16      0x3c0
+#define CSR_pmpaddr17      0x3c1
+#define CSR_pmpaddr18      0x3c2
+#define CSR_pmpaddr19      0x3c3
+#define CSR_pmpaddr20      0x3c4
+#define CSR_pmpaddr21      0x3c5
+#define CSR_pmpaddr22      0x3c6
+#define CSR_pmpaddr23      0x3c7
+#define CSR_pmpaddr24      0x3c8
+#define CSR_pmpaddr25      0x3c9
+#define CSR_pmpaddr26      0x3ca
+#define CSR_pmpaddr27      0x3cb
+#define CSR_pmpaddr28      0x3cc
+#define CSR_pmpaddr29      0x3cd
+#define CSR_pmpaddr30      0x3ce
+#define CSR_pmpaddr31      0x3cf
+#define CSR_pmpaddr32      0x3d0
+#define CSR_pmpaddr33      0x3d1
+#define CSR_pmpaddr34      0x3d2
+#define CSR_pmpaddr35      0x3d3
+#define CSR_pmpaddr36      0x3d4
+#define CSR_pmpaddr37      0x3d5
+#define CSR_pmpaddr38      0x3d6
+#define CSR_pmpaddr39      0x3d7
+#define CSR_pmpaddr40      0x3d8
+#define CSR_pmpaddr41      0x3d9
+#define CSR_pmpaddr42      0x3da
+#define CSR_pmpaddr43      0x3db
+#define CSR_pmpaddr44      0x3dc
+#define CSR_pmpaddr45      0x3dd
+#define CSR_pmpaddr46      0x3de
+#define CSR_pmpaddr47      0x3df
+#define CSR_pmpaddr48      0x3e0
+#define CSR_pmpaddr49      0x3e1
+#define CSR_pmpaddr50      0x3e2
+#define CSR_pmpaddr51      0x3e3
+#define CSR_pmpaddr52      0x3e4
+#define CSR_pmpaddr53      0x3e5
+#define CSR_pmpaddr54      0x3e6
+#define CSR_pmpaddr55      0x3e7
+#define CSR_pmpaddr56      0x3e8
+#define CSR_pmpaddr57      0x3e9
+#define CSR_pmpaddr58      0x3ea
+#define CSR_pmpaddr59      0x3eb
+#define CSR_pmpaddr60      0x3ec
+#define CSR_pmpaddr61      0x3ed
+#define CSR_pmpaddr62      0x3ee
+#define CSR_pmpaddr63      0x3ef
+#define CSR_pmpcfg0        0x3a0
+#define CSR_pmpcfg1        0x3a1
+#define CSR_pmpcfg2        0x3a2
+#define CSR_pmpcfg3        0x3a3
+#define CSR_pmpcfg4        0x3a4
+#define CSR_pmpcfg5        0x3a5
+#define CSR_pmpcfg6        0x3a6
+#define CSR_pmpcfg7        0x3a7
+#define CSR_pmpcfg8        0x3a8
+#define CSR_pmpcfg9        0x3a9
+#define CSR_pmpcfg10       0x3aa
+#define CSR_pmpcfg11       0x3ab
+#define CSR_pmpcfg12       0x3ac
+#define CSR_pmpcfg13       0x3ad
+#define CSR_pmpcfg14       0x3ae
+#define CSR_pmpcfg15       0x3af
+#define CSR_satp           0x180
+#define CSR_scause         0x142
+#define CSR_scounteren     0x106
+#define CSR_sedeleg        0x102
+#define CSR_sepc           0x141
+#define CSR_sideleg        0x103
+#define CSR_sie            0x104
+#define CSR_sip            0x144
+#define CSR_sscratch       0x140
+#define CSR_sstatus        0x100
+#define CSR_stval          0x143
+#define CSR_stvec          0x105
+#define CSR_tdata1         0x7a1
+#define CSR_tdata2         0x7a2
+#define CSR_tdata3         0x7a3
+#define CSR_time           0xc01
+#define CSR_timeh          0xc81
+#define CSR_tselect        0x7a0
+#define CSR_ucause         0x042
+#define CSR_uepc           0x041
+#define CSR_uie            0x004
+#define CSR_uip            0x044
+#define CSR_uscratch       0x040
+#define CSR_ustatus        0x000
+#define CSR_utval          0x043
+#define CSR_utvec          0x005
+#define CSR_vsatp          0x280
+#define CSR_vscause        0x242
+#define CSR_vsepc          0x241
+#define CSR_vsie           0x204
+#define CSR_vsip           0x244
+#define CSR_vsscratch      0x240
+#define CSR_vsstatus       0x200
+#define CSR_vstval         0x243
+#define CSR_vstvec         0x205
+
 static const char* CSRName(uint32_t immediate)
 {
     switch (immediate) {
-        case 0xc00: return "cycle";
-        case 0xc80: return "cycleh";
-        case 0x7b0: return "dcsr";
-        case 0x7b1: return "dpc";
-        case 0x7b2: return "dscratch0";
-        case 0x7b3: return "dscratch1";
-        case 0x003: return "fcsr";
-        case 0x001: return "fflags";
-        case 0x002: return "frm";
-        case 0x606: return "hcounteren";
-        case 0x602: return "hedeleg";
-        case 0x680: return "hgatp";
-        case 0x607: return "hgeie";
-        case 0xe07: return "hgeip";
-        case 0x603: return "hideleg";
-        case 0x604: return "hie";
-        case 0x644: return "hip";
-        case 0xc03: return "hpmcounter3";
-        case 0xc04: return "hpmcounter4";
-        case 0xc05: return "hpmcounter5";
-        case 0xc06: return "hpmcounter6";
-        case 0xc07: return "hpmcounter7";
-        case 0xc08: return "hpmcounter8";
-        case 0xc09: return "hpmcounter9";
-        case 0xc0a: return "hpmcounter10";
-        case 0xc0b: return "hpmcounter11";
-        case 0xc0c: return "hpmcounter12";
-        case 0xc0d: return "hpmcounter13";
-        case 0xc0e: return "hpmcounter14";
-        case 0xc0f: return "hpmcounter15";
-        case 0xc10: return "hpmcounter16";
-        case 0xc11: return "hpmcounter17";
-        case 0xc12: return "hpmcounter18";
-        case 0xc13: return "hpmcounter19";
-        case 0xc14: return "hpmcounter20";
-        case 0xc15: return "hpmcounter21";
-        case 0xc16: return "hpmcounter22";
-        case 0xc17: return "hpmcounter23";
-        case 0xc18: return "hpmcounter24";
-        case 0xc19: return "hpmcounter25";
-        case 0xc1a: return "hpmcounter26";
-        case 0xc1b: return "hpmcounter27";
-        case 0xc1c: return "hpmcounter28";
-        case 0xc1d: return "hpmcounter29";
-        case 0xc1e: return "hpmcounter30";
-        case 0xc1f: return "hpmcounter31";
-        case 0xc83: return "hpmcounter3h";
-        case 0xc84: return "hpmcounter4h";
-        case 0xc85: return "hpmcounter5h";
-        case 0xc86: return "hpmcounter6h";
-        case 0xc87: return "hpmcounter7h";
-        case 0xc88: return "hpmcounter8h";
-        case 0xc89: return "hpmcounter9h";
-        case 0xc8a: return "hpmcounter10h";
-        case 0xc8b: return "hpmcounter11h";
-        case 0xc8c: return "hpmcounter12h";
-        case 0xc8d: return "hpmcounter13h";
-        case 0xc8e: return "hpmcounter14h";
-        case 0xc8f: return "hpmcounter15h";
-        case 0xc90: return "hpmcounter16h";
-        case 0xc91: return "hpmcounter17h";
-        case 0xc92: return "hpmcounter18h";
-        case 0xc93: return "hpmcounter19h";
-        case 0xc94: return "hpmcounter20h";
-        case 0xc95: return "hpmcounter21h";
-        case 0xc96: return "hpmcounter22h";
-        case 0xc97: return "hpmcounter23h";
-        case 0xc98: return "hpmcounter24h";
-        case 0xc99: return "hpmcounter25h";
-        case 0xc9a: return "hpmcounter26h";
-        case 0xc9b: return "hpmcounter27h";
-        case 0xc9c: return "hpmcounter28h";
-        case 0xc9d: return "hpmcounter29h";
-        case 0xc9e: return "hpmcounter30h";
-        case 0xc9f: return "hpmcounter31h";
-        case 0x600: return "hstatus";
-        case 0x605: return "htimedelta";
-        case 0x615: return "htimedeltah";
-        case 0x64a: return "htinst";
-        case 0x643: return "htval";
-        case 0xc02: return "instret";
-        case 0xc82: return "instreth";
-        case 0xf12: return "marchid";
-        case 0x380: return "mbase";
-        case 0x381: return "mbound";
-        case 0x342: return "mcause";
-        case 0x306: return "mcounteren";
-        case 0x320: return "mcountinhibit";
-        case 0xb00: return "mcycle";
-        case 0xb80: return "mcycleh";
-        case 0x384: return "mdbase";
-        case 0x385: return "mdbound";
-        case 0x302: return "medeleg";
-        case 0x341: return "mepc";
-        case 0xf14: return "mhartid";
-        case 0xb03: return "mhpmcounter3";
-        case 0xb04: return "mhpmcounter4";
-        case 0xb05: return "mhpmcounter5";
-        case 0xb06: return "mhpmcounter6";
-        case 0xb07: return "mhpmcounter7";
-        case 0xb08: return "mhpmcounter8";
-        case 0xb09: return "mhpmcounter9";
-        case 0xb0a: return "mhpmcounter10";
-        case 0xb0b: return "mhpmcounter11";
-        case 0xb0c: return "mhpmcounter12";
-        case 0xb0d: return "mhpmcounter13";
-        case 0xb0e: return "mhpmcounter14";
-        case 0xb0f: return "mhpmcounter15";
-        case 0xb10: return "mhpmcounter16";
-        case 0xb11: return "mhpmcounter17";
-        case 0xb12: return "mhpmcounter18";
-        case 0xb13: return "mhpmcounter19";
-        case 0xb14: return "mhpmcounter20";
-        case 0xb15: return "mhpmcounter21";
-        case 0xb16: return "mhpmcounter22";
-        case 0xb17: return "mhpmcounter23";
-        case 0xb18: return "mhpmcounter24";
-        case 0xb19: return "mhpmcounter25";
-        case 0xb1a: return "mhpmcounter26";
-        case 0xb1b: return "mhpmcounter27";
-        case 0xb1c: return "mhpmcounter28";
-        case 0xb1d: return "mhpmcounter29";
-        case 0xb1e: return "mhpmcounter30";
-        case 0xb1f: return "mhpmcounter31";
-        case 0xb83: return "mhpmcounter3h";
-        case 0xb84: return "mhpmcounter4h";
-        case 0xb85: return "mhpmcounter5h";
-        case 0xb86: return "mhpmcounter6h";
-        case 0xb87: return "mhpmcounter7h";
-        case 0xb88: return "mhpmcounter8h";
-        case 0xb89: return "mhpmcounter9h";
-        case 0xb8a: return "mhpmcounter10h";
-        case 0xb8b: return "mhpmcounter11h";
-        case 0xb8c: return "mhpmcounter12h";
-        case 0xb8d: return "mhpmcounter13h";
-        case 0xb8e: return "mhpmcounter14h";
-        case 0xb8f: return "mhpmcounter15h";
-        case 0xb90: return "mhpmcounter16h";
-        case 0xb91: return "mhpmcounter17h";
-        case 0xb92: return "mhpmcounter18h";
-        case 0xb93: return "mhpmcounter19h";
-        case 0xb94: return "mhpmcounter20h";
-        case 0xb95: return "mhpmcounter21h";
-        case 0xb96: return "mhpmcounter22h";
-        case 0xb97: return "mhpmcounter23h";
-        case 0xb98: return "mhpmcounter24h";
-        case 0xb99: return "mhpmcounter25h";
-        case 0xb9a: return "mhpmcounter26h";
-        case 0xb9b: return "mhpmcounter27h";
-        case 0xb9c: return "mhpmcounter28h";
-        case 0xb9d: return "mhpmcounter29h";
-        case 0xb9e: return "mhpmcounter30h";
-        case 0xb9f: return "mhpmcounter31h";
-        case 0x323: return "mhpmevent3";
-        case 0x324: return "mhpmevent4";
-        case 0x325: return "mhpmevent5";
-        case 0x326: return "mhpmevent6";
-        case 0x327: return "mhpmevent7";
-        case 0x328: return "mhpmevent8";
-        case 0x329: return "mhpmevent9";
-        case 0x32a: return "mhpmevent10";
-        case 0x32b: return "mhpmevent11";
-        case 0x32c: return "mhpmevent12";
-        case 0x32d: return "mhpmevent13";
-        case 0x32e: return "mhpmevent14";
-        case 0x32f: return "mhpmevent15";
-        case 0x330: return "mhpmevent16";
-        case 0x331: return "mhpmevent17";
-        case 0x332: return "mhpmevent18";
-        case 0x333: return "mhpmevent19";
-        case 0x334: return "mhpmevent20";
-        case 0x335: return "mhpmevent21";
-        case 0x336: return "mhpmevent22";
-        case 0x337: return "mhpmevent23";
-        case 0x338: return "mhpmevent24";
-        case 0x339: return "mhpmevent25";
-        case 0x33a: return "mhpmevent26";
-        case 0x33b: return "mhpmevent27";
-        case 0x33c: return "mhpmevent28";
-        case 0x33d: return "mhpmevent29";
-        case 0x33e: return "mhpmevent30";
-        case 0x33f: return "mhpmevent31";
-        case 0x382: return "mibase";
-        case 0x383: return "mibound";
-        case 0x303: return "mideleg";
-        case 0x304: return "mie";
-        case 0xf13: return "mimpid";
-        case 0xb02: return "minstret";
-        case 0xb82: return "minstreth";
-        case 0x344: return "mip";
-        case 0x301: return "misa";
-        case 0x340: return "mscratch";
-        case 0x300: return "mstatus";
-        case 0x310: return "mstatush";
-        case 0x34a: return "mtinst";
-        case 0x343: return "mtval";
-        case 0x34b: return "mtval2";
-        case 0x305: return "mtvec";
-        case 0xf11: return "mvendorid";
-        case 0x3b0: return "pmpaddr0";
-        case 0x3b1: return "pmpaddr1";
-        case 0x3b2: return "pmpaddr2";
-        case 0x3b3: return "pmpaddr3";
-        case 0x3b4: return "pmpaddr4";
-        case 0x3b5: return "pmpaddr5";
-        case 0x3b6: return "pmpaddr6";
-        case 0x3b7: return "pmpaddr7";
-        case 0x3b8: return "pmpaddr8";
-        case 0x3b9: return "pmpaddr9";
-        case 0x3ba: return "pmpaddr10";
-        case 0x3bb: return "pmpaddr11";
-        case 0x3bc: return "pmpaddr12";
-        case 0x3bd: return "pmpaddr13";
-        case 0x3be: return "pmpaddr14";
-        case 0x3bf: return "pmpaddr15";
-        case 0x3c0: return "pmpaddr16";
-        case 0x3c1: return "pmpaddr17";
-        case 0x3c2: return "pmpaddr18";
-        case 0x3c3: return "pmpaddr19";
-        case 0x3c4: return "pmpaddr20";
-        case 0x3c5: return "pmpaddr21";
-        case 0x3c6: return "pmpaddr22";
-        case 0x3c7: return "pmpaddr23";
-        case 0x3c8: return "pmpaddr24";
-        case 0x3c9: return "pmpaddr25";
-        case 0x3ca: return "pmpaddr26";
-        case 0x3cb: return "pmpaddr27";
-        case 0x3cc: return "pmpaddr28";
-        case 0x3cd: return "pmpaddr29";
-        case 0x3ce: return "pmpaddr30";
-        case 0x3cf: return "pmpaddr31";
-        case 0x3d0: return "pmpaddr32";
-        case 0x3d1: return "pmpaddr33";
-        case 0x3d2: return "pmpaddr34";
-        case 0x3d3: return "pmpaddr35";
-        case 0x3d4: return "pmpaddr36";
-        case 0x3d5: return "pmpaddr37";
-        case 0x3d6: return "pmpaddr38";
-        case 0x3d7: return "pmpaddr39";
-        case 0x3d8: return "pmpaddr40";
-        case 0x3d9: return "pmpaddr41";
-        case 0x3da: return "pmpaddr42";
-        case 0x3db: return "pmpaddr43";
-        case 0x3dc: return "pmpaddr44";
-        case 0x3dd: return "pmpaddr45";
-        case 0x3de: return "pmpaddr46";
-        case 0x3df: return "pmpaddr47";
-        case 0x3e0: return "pmpaddr48";
-        case 0x3e1: return "pmpaddr49";
-        case 0x3e2: return "pmpaddr50";
-        case 0x3e3: return "pmpaddr51";
-        case 0x3e4: return "pmpaddr52";
-        case 0x3e5: return "pmpaddr53";
-        case 0x3e6: return "pmpaddr54";
-        case 0x3e7: return "pmpaddr55";
-        case 0x3e8: return "pmpaddr56";
-        case 0x3e9: return "pmpaddr57";
-        case 0x3ea: return "pmpaddr58";
-        case 0x3eb: return "pmpaddr59";
-        case 0x3ec: return "pmpaddr60";
-        case 0x3ed: return "pmpaddr61";
-        case 0x3ee: return "pmpaddr62";
-        case 0x3ef: return "pmpaddr63";
-        case 0x3a0: return "pmpcfg0";
-        case 0x3a1: return "pmpcfg1";
-        case 0x3a2: return "pmpcfg2";
-        case 0x3a3: return "pmpcfg3";
-        case 0x3a4: return "pmpcfg4";
-        case 0x3a5: return "pmpcfg5";
-        case 0x3a6: return "pmpcfg6";
-        case 0x3a7: return "pmpcfg7";
-        case 0x3a8: return "pmpcfg8";
-        case 0x3a9: return "pmpcfg9";
-        case 0x3aa: return "pmpcfg10";
-        case 0x3ab: return "pmpcfg11";
-        case 0x3ac: return "pmpcfg12";
-        case 0x3ad: return "pmpcfg13";
-        case 0x3ae: return "pmpcfg14";
-        case 0x3af: return "pmpcfg15";
-        case 0x180: return "satp";
-        case 0x142: return "scause";
-        case 0x106: return "scounteren";
-        case 0x102: return "sedeleg";
-        case 0x141: return "sepc";
-        case 0x103: return "sideleg";
-        case 0x104: return "sie";
-        case 0x144: return "sip";
-        case 0x140: return "sscratch";
-        case 0x100: return "sstatus";
-        case 0x143: return "stval";
-        case 0x105: return "stvec";
-        case 0x7a1: return "tdata1";
-        case 0x7a2: return "tdata2";
-        case 0x7a3: return "tdata3";
-        case 0xc01: return "time";
-        case 0xc81: return "timeh";
-        case 0x7a0: return "tselect";
-        case 0x042: return "ucause";
-        case 0x041: return "uepc";
-        case 0x004: return "uie";
-        case 0x044: return "uip";
-        case 0x040: return "uscratch";
-        case 0x000: return "ustatus";
-        case 0x043: return "utval";
-        case 0x005: return "utvec";
-        case 0x280: return "vsatp";
-        case 0x242: return "vscause";
-        case 0x241: return "vsepc";
-        case 0x204: return "vsie";
-        case 0x244: return "vsip";
-        case 0x240: return "vsscratch";
-        case 0x200: return "vsstatus";
-        case 0x243: return "vstval";
-        case 0x205: return "vstvec";
+        case CSR_cycle: return "cycle";
+        case CSR_cycleh: return "cycleh";
+        case CSR_dcsr: return "dcsr";
+        case CSR_dpc: return "dpc";
+        case CSR_dscratch0: return "dscratch0";
+        case CSR_dscratch1: return "dscratch1";
+        case CSR_fcsr: return "fcsr";
+        case CSR_fflags: return "fflags";
+        case CSR_frm: return "frm";
+        case CSR_hcounteren: return "hcounteren";
+        case CSR_hedeleg: return "hedeleg";
+        case CSR_hgatp: return "hgatp";
+        case CSR_hgeie: return "hgeie";
+        case CSR_hgeip: return "hgeip";
+        case CSR_hideleg: return "hideleg";
+        case CSR_hie: return "hie";
+        case CSR_hip: return "hip";
+        case CSR_hpmcounter3: return "hpmcounter3";
+        case CSR_hpmcounter4: return "hpmcounter4";
+        case CSR_hpmcounter5: return "hpmcounter5";
+        case CSR_hpmcounter6: return "hpmcounter6";
+        case CSR_hpmcounter7: return "hpmcounter7";
+        case CSR_hpmcounter8: return "hpmcounter8";
+        case CSR_hpmcounter9: return "hpmcounter9";
+        case CSR_hpmcounter10: return "hpmcounter10";
+        case CSR_hpmcounter11: return "hpmcounter11";
+        case CSR_hpmcounter12: return "hpmcounter12";
+        case CSR_hpmcounter13: return "hpmcounter13";
+        case CSR_hpmcounter14: return "hpmcounter14";
+        case CSR_hpmcounter15: return "hpmcounter15";
+        case CSR_hpmcounter16: return "hpmcounter16";
+        case CSR_hpmcounter17: return "hpmcounter17";
+        case CSR_hpmcounter18: return "hpmcounter18";
+        case CSR_hpmcounter19: return "hpmcounter19";
+        case CSR_hpmcounter20: return "hpmcounter20";
+        case CSR_hpmcounter21: return "hpmcounter21";
+        case CSR_hpmcounter22: return "hpmcounter22";
+        case CSR_hpmcounter23: return "hpmcounter23";
+        case CSR_hpmcounter24: return "hpmcounter24";
+        case CSR_hpmcounter25: return "hpmcounter25";
+        case CSR_hpmcounter26: return "hpmcounter26";
+        case CSR_hpmcounter27: return "hpmcounter27";
+        case CSR_hpmcounter28: return "hpmcounter28";
+        case CSR_hpmcounter29: return "hpmcounter29";
+        case CSR_hpmcounter30: return "hpmcounter30";
+        case CSR_hpmcounter31: return "hpmcounter31";
+        case CSR_hpmcounter3h: return "hpmcounter3h";
+        case CSR_hpmcounter4h: return "hpmcounter4h";
+        case CSR_hpmcounter5h: return "hpmcounter5h";
+        case CSR_hpmcounter6h: return "hpmcounter6h";
+        case CSR_hpmcounter7h: return "hpmcounter7h";
+        case CSR_hpmcounter8h: return "hpmcounter8h";
+        case CSR_hpmcounter9h: return "hpmcounter9h";
+        case CSR_hpmcounter10h: return "hpmcounter10h";
+        case CSR_hpmcounter11h: return "hpmcounter11h";
+        case CSR_hpmcounter12h: return "hpmcounter12h";
+        case CSR_hpmcounter13h: return "hpmcounter13h";
+        case CSR_hpmcounter14h: return "hpmcounter14h";
+        case CSR_hpmcounter15h: return "hpmcounter15h";
+        case CSR_hpmcounter16h: return "hpmcounter16h";
+        case CSR_hpmcounter17h: return "hpmcounter17h";
+        case CSR_hpmcounter18h: return "hpmcounter18h";
+        case CSR_hpmcounter19h: return "hpmcounter19h";
+        case CSR_hpmcounter20h: return "hpmcounter20h";
+        case CSR_hpmcounter21h: return "hpmcounter21h";
+        case CSR_hpmcounter22h: return "hpmcounter22h";
+        case CSR_hpmcounter23h: return "hpmcounter23h";
+        case CSR_hpmcounter24h: return "hpmcounter24h";
+        case CSR_hpmcounter25h: return "hpmcounter25h";
+        case CSR_hpmcounter26h: return "hpmcounter26h";
+        case CSR_hpmcounter27h: return "hpmcounter27h";
+        case CSR_hpmcounter28h: return "hpmcounter28h";
+        case CSR_hpmcounter29h: return "hpmcounter29h";
+        case CSR_hpmcounter30h: return "hpmcounter30h";
+        case CSR_hpmcounter31h: return "hpmcounter31h";
+        case CSR_hstatus: return "hstatus";
+        case CSR_htimedelta: return "htimedelta";
+        case CSR_htimedeltah: return "htimedeltah";
+        case CSR_htinst: return "htinst";
+        case CSR_htval: return "htval";
+        case CSR_instret: return "instret";
+        case CSR_instreth: return "instreth";
+        case CSR_marchid: return "marchid";
+        case CSR_mbase: return "mbase";
+        case CSR_mbound: return "mbound";
+        case CSR_mcause: return "mcause";
+        case CSR_mcounteren: return "mcounteren";
+        case CSR_mcountinhibit: return "mcountinhibit";
+        case CSR_mcycle: return "mcycle";
+        case CSR_mcycleh: return "mcycleh";
+        case CSR_mdbase: return "mdbase";
+        case CSR_mdbound: return "mdbound";
+        case CSR_medeleg: return "medeleg";
+        case CSR_mepc: return "mepc";
+        case CSR_mhartid: return "mhartid";
+        case CSR_mhpmcounter3: return "mhpmcounter3";
+        case CSR_mhpmcounter4: return "mhpmcounter4";
+        case CSR_mhpmcounter5: return "mhpmcounter5";
+        case CSR_mhpmcounter6: return "mhpmcounter6";
+        case CSR_mhpmcounter7: return "mhpmcounter7";
+        case CSR_mhpmcounter8: return "mhpmcounter8";
+        case CSR_mhpmcounter9: return "mhpmcounter9";
+        case CSR_mhpmcounter10: return "mhpmcounter10";
+        case CSR_mhpmcounter11: return "mhpmcounter11";
+        case CSR_mhpmcounter12: return "mhpmcounter12";
+        case CSR_mhpmcounter13: return "mhpmcounter13";
+        case CSR_mhpmcounter14: return "mhpmcounter14";
+        case CSR_mhpmcounter15: return "mhpmcounter15";
+        case CSR_mhpmcounter16: return "mhpmcounter16";
+        case CSR_mhpmcounter17: return "mhpmcounter17";
+        case CSR_mhpmcounter18: return "mhpmcounter18";
+        case CSR_mhpmcounter19: return "mhpmcounter19";
+        case CSR_mhpmcounter20: return "mhpmcounter20";
+        case CSR_mhpmcounter21: return "mhpmcounter21";
+        case CSR_mhpmcounter22: return "mhpmcounter22";
+        case CSR_mhpmcounter23: return "mhpmcounter23";
+        case CSR_mhpmcounter24: return "mhpmcounter24";
+        case CSR_mhpmcounter25: return "mhpmcounter25";
+        case CSR_mhpmcounter26: return "mhpmcounter26";
+        case CSR_mhpmcounter27: return "mhpmcounter27";
+        case CSR_mhpmcounter28: return "mhpmcounter28";
+        case CSR_mhpmcounter29: return "mhpmcounter29";
+        case CSR_mhpmcounter30: return "mhpmcounter30";
+        case CSR_mhpmcounter31: return "mhpmcounter31";
+        case CSR_mhpmcounter3h: return "mhpmcounter3h";
+        case CSR_mhpmcounter4h: return "mhpmcounter4h";
+        case CSR_mhpmcounter5h: return "mhpmcounter5h";
+        case CSR_mhpmcounter6h: return "mhpmcounter6h";
+        case CSR_mhpmcounter7h: return "mhpmcounter7h";
+        case CSR_mhpmcounter8h: return "mhpmcounter8h";
+        case CSR_mhpmcounter9h: return "mhpmcounter9h";
+        case CSR_mhpmcounter10h: return "mhpmcounter10h";
+        case CSR_mhpmcounter11h: return "mhpmcounter11h";
+        case CSR_mhpmcounter12h: return "mhpmcounter12h";
+        case CSR_mhpmcounter13h: return "mhpmcounter13h";
+        case CSR_mhpmcounter14h: return "mhpmcounter14h";
+        case CSR_mhpmcounter15h: return "mhpmcounter15h";
+        case CSR_mhpmcounter16h: return "mhpmcounter16h";
+        case CSR_mhpmcounter17h: return "mhpmcounter17h";
+        case CSR_mhpmcounter18h: return "mhpmcounter18h";
+        case CSR_mhpmcounter19h: return "mhpmcounter19h";
+        case CSR_mhpmcounter20h: return "mhpmcounter20h";
+        case CSR_mhpmcounter21h: return "mhpmcounter21h";
+        case CSR_mhpmcounter22h: return "mhpmcounter22h";
+        case CSR_mhpmcounter23h: return "mhpmcounter23h";
+        case CSR_mhpmcounter24h: return "mhpmcounter24h";
+        case CSR_mhpmcounter25h: return "mhpmcounter25h";
+        case CSR_mhpmcounter26h: return "mhpmcounter26h";
+        case CSR_mhpmcounter27h: return "mhpmcounter27h";
+        case CSR_mhpmcounter28h: return "mhpmcounter28h";
+        case CSR_mhpmcounter29h: return "mhpmcounter29h";
+        case CSR_mhpmcounter30h: return "mhpmcounter30h";
+        case CSR_mhpmcounter31h: return "mhpmcounter31h";
+        case CSR_mhpmevent3: return "mhpmevent3";
+        case CSR_mhpmevent4: return "mhpmevent4";
+        case CSR_mhpmevent5: return "mhpmevent5";
+        case CSR_mhpmevent6: return "mhpmevent6";
+        case CSR_mhpmevent7: return "mhpmevent7";
+        case CSR_mhpmevent8: return "mhpmevent8";
+        case CSR_mhpmevent9: return "mhpmevent9";
+        case CSR_mhpmevent10: return "mhpmevent10";
+        case CSR_mhpmevent11: return "mhpmevent11";
+        case CSR_mhpmevent12: return "mhpmevent12";
+        case CSR_mhpmevent13: return "mhpmevent13";
+        case CSR_mhpmevent14: return "mhpmevent14";
+        case CSR_mhpmevent15: return "mhpmevent15";
+        case CSR_mhpmevent16: return "mhpmevent16";
+        case CSR_mhpmevent17: return "mhpmevent17";
+        case CSR_mhpmevent18: return "mhpmevent18";
+        case CSR_mhpmevent19: return "mhpmevent19";
+        case CSR_mhpmevent20: return "mhpmevent20";
+        case CSR_mhpmevent21: return "mhpmevent21";
+        case CSR_mhpmevent22: return "mhpmevent22";
+        case CSR_mhpmevent23: return "mhpmevent23";
+        case CSR_mhpmevent24: return "mhpmevent24";
+        case CSR_mhpmevent25: return "mhpmevent25";
+        case CSR_mhpmevent26: return "mhpmevent26";
+        case CSR_mhpmevent27: return "mhpmevent27";
+        case CSR_mhpmevent28: return "mhpmevent28";
+        case CSR_mhpmevent29: return "mhpmevent29";
+        case CSR_mhpmevent30: return "mhpmevent30";
+        case CSR_mhpmevent31: return "mhpmevent31";
+        case CSR_mibase: return "mibase";
+        case CSR_mibound: return "mibound";
+        case CSR_mideleg: return "mideleg";
+        case CSR_mie: return "mie";
+        case CSR_mimpid: return "mimpid";
+        case CSR_minstret: return "minstret";
+        case CSR_minstreth: return "minstreth";
+        case CSR_mip: return "mip";
+        case CSR_misa: return "misa";
+        case CSR_mscratch: return "mscratch";
+        case CSR_mstatus: return "mstatus";
+        case CSR_mstatush: return "mstatush";
+        case CSR_mtinst: return "mtinst";
+        case CSR_mtval: return "mtval";
+        case CSR_mtval2: return "mtval2";
+        case CSR_mtvec: return "mtvec";
+        case CSR_mvendorid: return "mvendorid";
+        case CSR_pmpaddr0: return "pmpaddr0";
+        case CSR_pmpaddr1: return "pmpaddr1";
+        case CSR_pmpaddr2: return "pmpaddr2";
+        case CSR_pmpaddr3: return "pmpaddr3";
+        case CSR_pmpaddr4: return "pmpaddr4";
+        case CSR_pmpaddr5: return "pmpaddr5";
+        case CSR_pmpaddr6: return "pmpaddr6";
+        case CSR_pmpaddr7: return "pmpaddr7";
+        case CSR_pmpaddr8: return "pmpaddr8";
+        case CSR_pmpaddr9: return "pmpaddr9";
+        case CSR_pmpaddr10: return "pmpaddr10";
+        case CSR_pmpaddr11: return "pmpaddr11";
+        case CSR_pmpaddr12: return "pmpaddr12";
+        case CSR_pmpaddr13: return "pmpaddr13";
+        case CSR_pmpaddr14: return "pmpaddr14";
+        case CSR_pmpaddr15: return "pmpaddr15";
+        case CSR_pmpaddr16: return "pmpaddr16";
+        case CSR_pmpaddr17: return "pmpaddr17";
+        case CSR_pmpaddr18: return "pmpaddr18";
+        case CSR_pmpaddr19: return "pmpaddr19";
+        case CSR_pmpaddr20: return "pmpaddr20";
+        case CSR_pmpaddr21: return "pmpaddr21";
+        case CSR_pmpaddr22: return "pmpaddr22";
+        case CSR_pmpaddr23: return "pmpaddr23";
+        case CSR_pmpaddr24: return "pmpaddr24";
+        case CSR_pmpaddr25: return "pmpaddr25";
+        case CSR_pmpaddr26: return "pmpaddr26";
+        case CSR_pmpaddr27: return "pmpaddr27";
+        case CSR_pmpaddr28: return "pmpaddr28";
+        case CSR_pmpaddr29: return "pmpaddr29";
+        case CSR_pmpaddr30: return "pmpaddr30";
+        case CSR_pmpaddr31: return "pmpaddr31";
+        case CSR_pmpaddr32: return "pmpaddr32";
+        case CSR_pmpaddr33: return "pmpaddr33";
+        case CSR_pmpaddr34: return "pmpaddr34";
+        case CSR_pmpaddr35: return "pmpaddr35";
+        case CSR_pmpaddr36: return "pmpaddr36";
+        case CSR_pmpaddr37: return "pmpaddr37";
+        case CSR_pmpaddr38: return "pmpaddr38";
+        case CSR_pmpaddr39: return "pmpaddr39";
+        case CSR_pmpaddr40: return "pmpaddr40";
+        case CSR_pmpaddr41: return "pmpaddr41";
+        case CSR_pmpaddr42: return "pmpaddr42";
+        case CSR_pmpaddr43: return "pmpaddr43";
+        case CSR_pmpaddr44: return "pmpaddr44";
+        case CSR_pmpaddr45: return "pmpaddr45";
+        case CSR_pmpaddr46: return "pmpaddr46";
+        case CSR_pmpaddr47: return "pmpaddr47";
+        case CSR_pmpaddr48: return "pmpaddr48";
+        case CSR_pmpaddr49: return "pmpaddr49";
+        case CSR_pmpaddr50: return "pmpaddr50";
+        case CSR_pmpaddr51: return "pmpaddr51";
+        case CSR_pmpaddr52: return "pmpaddr52";
+        case CSR_pmpaddr53: return "pmpaddr53";
+        case CSR_pmpaddr54: return "pmpaddr54";
+        case CSR_pmpaddr55: return "pmpaddr55";
+        case CSR_pmpaddr56: return "pmpaddr56";
+        case CSR_pmpaddr57: return "pmpaddr57";
+        case CSR_pmpaddr58: return "pmpaddr58";
+        case CSR_pmpaddr59: return "pmpaddr59";
+        case CSR_pmpaddr60: return "pmpaddr60";
+        case CSR_pmpaddr61: return "pmpaddr61";
+        case CSR_pmpaddr62: return "pmpaddr62";
+        case CSR_pmpaddr63: return "pmpaddr63";
+        case CSR_pmpcfg0: return "pmpcfg0";
+        case CSR_pmpcfg1: return "pmpcfg1";
+        case CSR_pmpcfg2: return "pmpcfg2";
+        case CSR_pmpcfg3: return "pmpcfg3";
+        case CSR_pmpcfg4: return "pmpcfg4";
+        case CSR_pmpcfg5: return "pmpcfg5";
+        case CSR_pmpcfg6: return "pmpcfg6";
+        case CSR_pmpcfg7: return "pmpcfg7";
+        case CSR_pmpcfg8: return "pmpcfg8";
+        case CSR_pmpcfg9: return "pmpcfg9";
+        case CSR_pmpcfg10: return "pmpcfg10";
+        case CSR_pmpcfg11: return "pmpcfg11";
+        case CSR_pmpcfg12: return "pmpcfg12";
+        case CSR_pmpcfg13: return "pmpcfg13";
+        case CSR_pmpcfg14: return "pmpcfg14";
+        case CSR_pmpcfg15: return "pmpcfg15";
+        case CSR_satp: return "satp";
+        case CSR_scause: return "scause";
+        case CSR_scounteren: return "scounteren";
+        case CSR_sedeleg: return "sedeleg";
+        case CSR_sepc: return "sepc";
+        case CSR_sideleg: return "sideleg";
+        case CSR_sie: return "sie";
+        case CSR_sip: return "sip";
+        case CSR_sscratch: return "sscratch";
+        case CSR_sstatus: return "sstatus";
+        case CSR_stval: return "stval";
+        case CSR_stvec: return "stvec";
+        case CSR_tdata1: return "tdata1";
+        case CSR_tdata2: return "tdata2";
+        case CSR_tdata3: return "tdata3";
+        case CSR_time: return "time";
+        case CSR_timeh: return "timeh";
+        case CSR_tselect: return "tselect";
+        case CSR_ucause: return "ucause";
+        case CSR_uepc: return "uepc";
+        case CSR_uie: return "uie";
+        case CSR_uip: return "uip";
+        case CSR_uscratch: return "uscratch";
+        case CSR_ustatus: return "ustatus";
+        case CSR_utval: return "utval";
+        case CSR_utvec: return "utvec";
+        case CSR_vsatp: return "vsatp";
+        case CSR_vscause: return "vscause";
+        case CSR_vsepc: return "vsepc";
+        case CSR_vsie: return "vsie";
+        case CSR_vsip: return "vsip";
+        case CSR_vsscratch: return "vsscratch";
+        case CSR_vsstatus: return "vsstatus";
+        case CSR_vstval: return "vstval";
+        case CSR_vstvec: return "vstvec";
         default: return "";
     }
 }
@@ -529,24 +844,21 @@ const char* InstructionName(InstructionType type)
 
 static InstructionType DecodeQ0(RawInstruction instruction)
 {
-    fprintf(stderr, "Instruction 0x%08X unimplemented\n", instruction.value);
-    assert(0);
+    fprintf(stderr, "DecodeQ0: Instruction 0x%08X unimplemented\n", instruction.value);
     (void) instruction;
     return InstructionType::ILLEGAL;
 }
 
 static InstructionType DecodeQ1(RawInstruction instruction)
 {
-    fprintf(stderr, "Instruction 0x%08X unimplemented\n", instruction.value);
-    assert(0);
+    fprintf(stderr, "DecodeQ1: Instruction 0x%08X unimplemented\n", instruction.value);
     (void) instruction;
     return InstructionType::ILLEGAL;
 }
 
 static InstructionType DecodeQ2(RawInstruction instruction)
 {
-    fprintf(stderr, "Instruction 0x%08X unimplemented\n", instruction.value);
-    assert(0);
+    fprintf(stderr, "DecodeQ2: Instruction 0x%08X unimplemented\n", instruction.value);
     (void) instruction;
     return InstructionType::ILLEGAL;
 }
@@ -738,11 +1050,10 @@ static InstructionType DecodeQ3(RawInstruction instruction)
 
 InstructionType DecodeInstruction(RawInstruction instruction)
 {
-    if (instruction.value == 0) return InstructionType::ILLEGAL;
     switch (instruction.value & 0b11) {
-        case 0b00: return DecodeQ0(instruction);
-        case 0b01: return DecodeQ1(instruction);
-        case 0b10: return DecodeQ2(instruction);
+        case 0b00: return InstructionType::ILLEGAL; // return DecodeQ0(instruction);
+        case 0b01: return InstructionType::ILLEGAL; // return DecodeQ1(instruction);
+        case 0b10: return InstructionType::ILLEGAL; // return DecodeQ2(instruction);
         case 0b11: return DecodeQ3(instruction);
     }
     return InstructionType::ILLEGAL;
@@ -751,17 +1062,14 @@ InstructionType DecodeInstruction(RawInstruction instruction)
 void CPU::Reset()
 {
     pc = 0;
-    fcsr = 0;
-    for (uint32_t i = 0; i < 32; ++i)
-        intRegs.Write(i, 0U);
-    for (uint32_t i = 0; i < 32; ++i)
-        fltRegs.Write(i, 0U);
-    for (uint32_t i = 0; i < 4096; ++i)
-        csr.Write(i, 0);
-    memset(memory.Buffer(), 0, 1024*1024);
+    memset(&intRegs, 0, sizeof(intRegs));
+    memset(&fltRegs, 0, sizeof(fltRegs));
+    memset(&csr, 0, sizeof(csr));
+    memset(memory.buffer, 0, memory.MemSize);
+    memset(memory.didChange, false, memory.MemSize);
 }
 
-void CPU::InitializeFromELF(uint8_t* data, size_t size)
+bool CPU::InitializeFromELF(uint8_t* data, size_t size)
 {
     // ELF Header
     assert(sizeof(Elf32_Ehdr) < size);
@@ -774,39 +1082,39 @@ void CPU::InitializeFromELF(uint8_t* data, size_t size)
         header.e_ident[EI_MAG3] != ELFMAG3)
     {
         fprintf(stderr, "Invalid ELF file\n");
-        exit(1);
+        return false;
     }
 
     if (header.e_ident[EI_CLASS] != ELFCLASS32) {
         fprintf(stderr, "ELF file is not 32-bit\n");
-        exit(1);
+        return false;
     }
 
     if (header.e_ident[EI_DATA] != ELFDATA2LSB) {
         fprintf(stderr, "ELF file is not little-endian\n");
-        exit(1);
+        return false;
     }
 
     // Rest of e_ident: version, OSABI, padding...
 
     if (header.e_type != ET_EXEC) {
         fprintf(stderr, "ELF file is not executable\n");
-        exit(1);
+        return false;
     }
 
     if (header.e_machine != EM_RISCV) {
         fprintf(stderr, "ELF file targets wrong machine, expected RISC-V\n");
-        exit(1);
+        return false;
     }
 
     if (header.e_version != EV_CURRENT) {
         fprintf(stderr, "ELF file has wrong version, expected 1\n");
-        exit(1);
+        return false;
     }
 
     if (header.e_entry == 0) {
         fprintf(stderr, "ELF file does not specify entry point\n");
-        exit(1);
+        return false;
     }
     pc = header.e_entry & ~0x80000000;
 
@@ -838,7 +1146,7 @@ void CPU::InitializeFromELF(uint8_t* data, size_t size)
             assert(pHeader.p_filesz == pHeader.p_memsz);
             pHeader.p_paddr &= ~0x80000000;
             // TODO: Respect flags
-            memcpy((uint8_t*)memory.Buffer() + pHeader.p_paddr, data + pHeader.p_offset, pHeader.p_filesz);
+            memcpy(memory.buffer + pHeader.p_paddr, data + pHeader.p_offset, pHeader.p_filesz);
         }
     }
 
@@ -857,6 +1165,8 @@ void CPU::InitializeFromELF(uint8_t* data, size_t size)
 
     free(sectionHeaders);
 #endif
+
+    return true;
 }
 
 
@@ -866,7 +1176,7 @@ bool CPU::Step()
     InstructionType type = DecodeInstruction(ins);
     if (type == InstructionType::MRET) {
         // TODO: Actually do privilege stuff
-        pc = csr.Read(0x341);
+        pc = csr.Read(CSR_mepc);
         return true;
     }
     uint32_t oldPc = pc;

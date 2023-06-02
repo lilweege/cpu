@@ -6,67 +6,58 @@
 #include <cstdio>
 #include <bit>
 
-template<uint32_t MemSize>
+template<uint32_t _MemSize>
 class Memory
 {
+public:
+    constexpr static uint32_t MemSize = _MemSize;
 public:
     template<typename T>
     T Read(uint32_t address) const
     {
+        assert(address + sizeof(T) <= MemSize);
         T t;
-        memcpy((uint8_t*) &t, m_rawMemory + address, sizeof(T));
+        memcpy((uint8_t*) &t, buffer + address, sizeof(T));
         return t;
     }
 
     template<typename T>
     void Write(uint32_t address, T value)
     {
-        memcpy(m_rawMemory + address, (const uint8_t*) &value, sizeof(T));
+        assert(address + sizeof(T) <= MemSize);
+        memset(didChange + address, 1, sizeof(T));
+        memcpy(buffer + address, (const uint8_t*) &value, sizeof(T));
     }
 
-    void* Buffer() { return m_rawMemory; }
-
-private:
-    uint8_t m_rawMemory[MemSize];
+    bool didChange[MemSize];
+    uint8_t buffer[MemSize];
 };
 
-
-class RegisterFile {
+template <uint32_t _NumRegs>
+class RegisterFile
+{
+public:
+    constexpr static uint32_t NumRegs = _NumRegs;
 public:
     template<typename T=uint32_t>
     T Read(uint32_t x) const
     {
-        assert(x < 32);
+        assert(x < NumRegs);
         if (x == 0) return 0;
-        return static_cast<T>(m_registers[x]);
+        return static_cast<T>(registers[x]);
     }
     
     void Write(uint32_t x, auto value)
     {
-        assert(x < 32);
-        if (x != 0)
-            m_registers[x] = static_cast<uint32_t>(value);
+        assert(x < NumRegs);
+        if (x != 0) {
+            didChange[x] = true;
+            registers[x] = static_cast<uint32_t>(value);
+        }
     }
-private:
-    uint32_t m_registers[32];
-};
 
-
-class CSRFile {
-public:
-    uint32_t Read(uint32_t x) const
-    {
-        assert(x < 4096);
-        return m_registers[x];
-    }
-    
-    void Write(uint32_t x, uint32_t value)
-    {
-        assert(x < 4096);
-        m_registers[x] = value;
-    }
-private:
-    uint32_t m_registers[4096];
+    bool didChange[NumRegs];
+    uint32_t registers[NumRegs];
 };
 
 
@@ -265,14 +256,13 @@ struct CPU
 {
 public:
     void Reset();
-    void InitializeFromELF(uint8_t* data, size_t size);
+    bool InitializeFromELF(uint8_t* data, size_t size);
     bool Step();
 public:
     uint32_t pc;
-    uint32_t fcsr;
-    RegisterFile intRegs;
-    RegisterFile fltRegs;
-    CSRFile csr;
+    RegisterFile<32> intRegs;
+    RegisterFile<32> fltRegs;
+    RegisterFile<4096> csr;
     Memory<1024*1024> memory;
 };
 
