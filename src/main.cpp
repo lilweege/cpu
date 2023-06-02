@@ -260,6 +260,14 @@ static void TestISA()
         "riscv-tests/isa/rv32ui-p-sw",
         "riscv-tests/isa/rv32ui-p-xor",
         "riscv-tests/isa/rv32ui-p-xori",
+        "riscv-tests/isa/rv32um-p-mul",
+        "riscv-tests/isa/rv32um-p-mulh",
+        "riscv-tests/isa/rv32um-p-mulhu",
+        "riscv-tests/isa/rv32um-p-mulhsu",
+        "riscv-tests/isa/rv32um-p-rem",
+        "riscv-tests/isa/rv32um-p-remu",
+        "riscv-tests/isa/rv32um-p-divu",
+        "riscv-tests/isa/rv32um-p-div",
     };
     int numFailed = 0;
     size_t numTests = sizeof(testNames) / sizeof(testNames[0]);
@@ -411,7 +419,8 @@ static bool MemoryHighlightFn(const ImU8* data, size_t off)
 int main(int, char**)
 {
     // TestDecode();
-    // TestISA();
+    TestISA();
+    return 0;
 
     std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
     readableObjectCode.reserve(cpu.memory.MemSize);

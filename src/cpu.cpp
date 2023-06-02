@@ -1279,6 +1279,34 @@ bool CPU::Step()
             intRegs.Write(ins.Ityp.rd, oldCsr);
             csr.Write(ins.Ityp.imm11_0, oldCsr & ~ins.Ityp.rs1);
         }
+        break; case InstructionType::MUL:   intRegs.Write(ins.Rtyp.rd, ( int32_t)((( int64_t)intRegs.Read< int32_t>(ins.Rtyp.rs1) * ( int64_t)intRegs.Read< int32_t>(ins.Rtyp.rs2))));
+        break; case InstructionType::MULH:  intRegs.Write(ins.Rtyp.rd, ( int32_t)((( int64_t)intRegs.Read< int32_t>(ins.Rtyp.rs1) * ( int64_t)intRegs.Read< int32_t>(ins.Rtyp.rs2)) >> 32UL));
+        break; case InstructionType::MULHSU:intRegs.Write(ins.Rtyp.rd, ( int32_t)((( int64_t)intRegs.Read< int32_t>(ins.Rtyp.rs1) * (uint64_t)intRegs.Read<uint32_t>(ins.Rtyp.rs2)) >> 32UL));
+        break; case InstructionType::MULHU: intRegs.Write(ins.Rtyp.rd, ( int32_t)(((uint64_t)intRegs.Read<uint32_t>(ins.Rtyp.rs1) * (uint64_t)intRegs.Read<uint32_t>(ins.Rtyp.rs2)) >> 32UL));
+        break; case InstructionType::DIVU:  {
+            uint64_t divisor = intRegs.Read<uint32_t>(ins.Rtyp.rs2);
+            uint64_t dividend = intRegs.Read<uint32_t>(ins.Rtyp.rs1);
+            uint32_t quotient = (divisor == 0) ? 0xFFFFFFFFUL : (uint32_t) (dividend / divisor);
+            intRegs.Write(ins.Rtyp.rd, quotient);
+        }
+        break; case InstructionType::DIV:   {
+            int64_t divisor = intRegs.Read< int32_t>(ins.Rtyp.rs2);
+            int64_t dividend = intRegs.Read< int32_t>(ins.Rtyp.rs1);
+            int32_t quotient =  (divisor == 0) ? -1L : (int32_t) (dividend / divisor);
+            intRegs.Write(ins.Rtyp.rd, quotient);
+        }
+        break; case InstructionType::REM:   {
+            int64_t divisor = intRegs.Read< int32_t>(ins.Rtyp.rs2);
+            int64_t dividend = intRegs.Read< int32_t>(ins.Rtyp.rs1);
+            int32_t remainder = (divisor == 0) ? dividend : (int32_t) (dividend % divisor);
+            intRegs.Write(ins.Rtyp.rd, remainder);
+        }
+        break; case InstructionType::REMU:  {
+            uint64_t divisor = intRegs.Read<uint32_t>(ins.Rtyp.rs2);
+            uint64_t dividend = intRegs.Read<uint32_t>(ins.Rtyp.rs1);
+            uint32_t remainder = (divisor == 0) ? dividend : (uint32_t) (dividend % divisor);
+            intRegs.Write(ins.Rtyp.rd, remainder);
+        }
     }
     return true;
 }
