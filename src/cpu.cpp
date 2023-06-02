@@ -1161,7 +1161,19 @@ bool CPU::InitializeFromELF(uint8_t* data, size_t size)
     assert(sectionHeaderOffset + sectionHeadersSize <= size);
     memcpy(sectionHeaders, data + sectionHeaderOffset, sectionHeadersSize);
 
-    // ...
+    assert(sectionHeadersStartIdx != SHN_UNDEF);
+    Elf32_Shdr shstrtab = sectionHeaders[sectionHeadersStartIdx];
+    assert(shstrtab.sh_type == SHT_STRTAB);
+
+    for (size_t i = 0; i < numSectionHeaders; ++i) {
+        Elf32_Shdr sHeader = sectionHeaders[i];
+        if (sHeader.sh_name != SHN_UNDEF) {
+            const char* sectionName = (char*) data + shstrtab.sh_offset + sHeader.sh_name;
+            printf("%zu: %s\n", i, sectionName);
+        }
+
+        // ...
+    }
 
     free(sectionHeaders);
 #endif
