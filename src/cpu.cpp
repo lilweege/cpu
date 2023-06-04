@@ -1007,7 +1007,7 @@ bool CPU::Step()
     uint32_t oldPc = pc;
     pc += 4;
     switch (type) {
-        default: fprintf(stderr, "%s unimplemented", InstructionName(type)); return false;
+        default: fprintf(stderr, "\"%s\" unimplemented!\n", InstructionName(type)); return false;
         break; case InstructionType::ADDI:  intRegs.Write(ins.Ityp.rd, intRegs.Read<uint32_t>(ins.Ityp.rs1) + SignExtend(ins.Ityp.imm11_0, 12));
         break; case InstructionType::SLTI:  intRegs.Write(ins.Ityp.rd, intRegs.Read< int32_t>(ins.Ityp.rs1) < SignExtend(ins.Ityp.imm11_0, 12));
         break; case InstructionType::SLTIU: intRegs.Write(ins.Ityp.rd, intRegs.Read<uint32_t>(ins.Ityp.rs1) < (uint32_t)SignExtend(ins.Ityp.imm11_0, 12));

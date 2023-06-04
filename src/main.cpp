@@ -16,8 +16,15 @@
 #include <vector>
 
 
+struct Instruction
+{
+    FormattedInstruction instruction;
+    uint32_t address;
+    bool hasBreakpoint;
+};
 static CPU cpu;
-static std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
+static CPU initialState{};
+static std::vector<Instruction> instructionListing;
 
 
 static void FileOpenButtonPressed()
@@ -32,18 +39,22 @@ static void FileOpenButtonPressed()
                 pfd::choice::ok, pfd::icon::error);
         }
     }
-    readableObjectCode.clear();
-    readableObjectCode.reserve(cpu.memory.Size);
+    instructionListing.clear();
+    instructionListing.reserve(cpu.memory.Size);
     for (uint32_t i = 0; i+4 <= cpu.memory.Size; i += 4) {
         uint32_t word = cpu.memory.Read<uint32_t>(i);
         if (DecodeInstruction(word) != InstructionType::ILLEGAL)
-            readableObjectCode.push_back({i, FormatInstruction(word)});
+            instructionListing.push_back({FormatInstruction(word), i, false});
     }
+    initialState = cpu;
 }
 
 static void DebugStartButtonPressed()
 {
-    printf("DebugStartButtonPressed!\n");
+    while (true) {
+        if (!cpu.Step()) break;
+        if (instructionListing[cpu.pc/4].hasBreakpoint) break;
+    }
 }
 
 static void DebugStopButtonPressed()
@@ -53,20 +64,20 @@ static void DebugStopButtonPressed()
 
 static void DebugRestartButtonPressed()
 {
-    printf("DebugRestartButtonPressed!\n");
+    cpu = initialState;
 }
 
 static void DebugStepOverButtonPressed()
+{
+    printf("DebugStepOverButtonPressed!\n");
+}
+
+static void DebugStepIntoButtonPressed()
 {
     memset(cpu.intRegs.didChange, false, cpu.intRegs.Size);
     memset(cpu.fltRegs.didChange, false, cpu.fltRegs.Size);
     memset(cpu.memory.didChange, false, cpu.memory.Size);
     cpu.Step();
-}
-
-static void DebugStepIntoButtonPressed()
-{
-    printf("DebugStepIntoButtonPressed!\n");
 }
 
 static void DebugStepOutButtonPressed()
@@ -126,11 +137,11 @@ int main()
     Button buttons[] = {
         { .callbackFunc = FileOpenButtonPressed,      .texture = LoadTextureFromFile("./images/folder-opened.png")   },
         { .callbackFunc = DebugStartButtonPressed,    .texture = LoadTextureFromFile("./images/debug-start.png")     },
-        { .callbackFunc = DebugStopButtonPressed,     .texture = LoadTextureFromFile("./images/debug-stop.png")      },
+        // { .callbackFunc = DebugStopButtonPressed,     .texture = LoadTextureFromFile("./images/debug-stop.png")      },
         { .callbackFunc = DebugRestartButtonPressed,  .texture = LoadTextureFromFile("./images/debug-restart.png")   },
-        { .callbackFunc = DebugStepOverButtonPressed, .texture = LoadTextureFromFile("./images/debug-step-over.png") },
+        // { .callbackFunc = DebugStepOverButtonPressed, .texture = LoadTextureFromFile("./images/debug-step-over.png") },
         { .callbackFunc = DebugStepIntoButtonPressed, .texture = LoadTextureFromFile("./images/debug-step-into.png") },
-        { .callbackFunc = DebugStepOutButtonPressed,  .texture = LoadTextureFromFile("./images/debug-step-out.png")  },
+        // { .callbackFunc = DebugStepOutButtonPressed,  .texture = LoadTextureFromFile("./images/debug-step-out.png")  },
     };
     size_t numButtons = sizeof(buttons) / sizeof(buttons[0]);
 
@@ -210,10 +221,14 @@ int main()
 
 
             if (ImGui::Begin("Code")) {
-                for (const auto& [addr, instruction] : readableObjectCode) {
-                    bool isCurrentInstruction = addr == cpu.pc;
+                for (auto& [instruction, address, hasBreakpoint] : instructionListing) {
+                    bool isCurrentInstruction = address == cpu.pc;
+                    char buff[32];
+                    snprintf(buff, sizeof(buff), "##%08X:", address);
+                    ImGui::Checkbox(buff, &hasBreakpoint);
+                    ImGui::SameLine();
                     if (isCurrentInstruction) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
-                    ImGui::Text("%08X: %s", addr, instruction.buffer);
+                    ImGui::Text("%08X: %s", address, instruction.buffer);
                     if (isCurrentInstruction) ImGui::PopStyleColor();
                 }
             }
