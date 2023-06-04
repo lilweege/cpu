@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <cmath>
 #include <cfenv>
+#include <climits>
 #include <bit>
+#include "helpers.hpp"
 
 static int32_t SignExtend(uint32_t x, uint32_t n)
 {
@@ -850,6 +852,9 @@ ParseELFResult CPU::InitializeFromELF(uint8_t* data, size_t size)
 
     free(programHeaders);
 
+    (void) numSectionHeaders;
+    (void) sectionHeadersStartIdx;
+    (void) sectionHeaderOffset;
 #if 0 // These are unimportant for execution, only for linking
     // Section Headers
     size_t sectionHeadersSize = numSectionHeaders * sizeof(Elf32_Shdr);
@@ -1016,7 +1021,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FMSUBS: {
@@ -1028,7 +1033,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FNMSUBS: {
@@ -1040,7 +1045,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FNMADDS: {
@@ -1052,7 +1057,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FADDS: {
@@ -1064,7 +1069,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FSUBS: {
@@ -1076,7 +1081,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FMULS: {
@@ -1088,7 +1093,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FDIVS: {
@@ -1100,7 +1105,7 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FSQRTS: {
@@ -1112,46 +1117,66 @@ bool CPU::Step()
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
+            if (std::isnan(x)) x = bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FSGNJS:  {
-            uint32_t rs1_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
-            uint32_t rs2_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
-            fltRegs.Write(ins.Rtyp.rd, std::bit_cast<float>((rs2_u32 & 0x80000000) | (rs1_u32 & ~0x80000000)));
+            uint32_t rs1_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
+            uint32_t rs2_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
+            fltRegs.Write(ins.Rtyp.rd, bit_cast<float>((rs2_u32 & 0x80000000) | (rs1_u32 & ~0x80000000)));
         }
         break; case InstructionType::FSGNJNS: {
-            uint32_t rs1_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
-            uint32_t rs2_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
-            fltRegs.Write(ins.Rtyp.rd, std::bit_cast<float>((~rs2_u32 & 0x80000000) | (rs1_u32 & ~0x80000000)));
+            uint32_t rs1_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
+            uint32_t rs2_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
+            fltRegs.Write(ins.Rtyp.rd, bit_cast<float>((~rs2_u32 & 0x80000000) | (rs1_u32 & ~0x80000000)));
         }
         break; case InstructionType::FSGNJXS: {
-            uint32_t rs1_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
-            uint32_t rs2_u32 = std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
-            fltRegs.Write(ins.Rtyp.rd, std::bit_cast<float>((rs2_u32 & 0x80000000) ^ rs1_u32));
+            uint32_t rs1_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1));
+            uint32_t rs2_u32 = bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs2));
+            fltRegs.Write(ins.Rtyp.rd, bit_cast<float>((rs2_u32 & 0x80000000) ^ rs1_u32));
         }
         break; case InstructionType::FMINS: {
             feclearexcept(FE_ALL_EXCEPT);
-            float x = fminf(fltRegs.Read(ins.Rtyp.rs1), fltRegs.Read(ins.Rtyp.rs2));
+            float a = fltRegs.Read(ins.Rtyp.rs1);
+            float b = fltRegs.Read(ins.Rtyp.rs2);
+            float x = fminf(a, b);
             uint32_t flags = (bool(fetestexcept(FE_INEXACT))   << 0)
                            | (bool(fetestexcept(FE_UNDERFLOW)) << 1)
                            | (bool(fetestexcept(FE_OVERFLOW))  << 2)
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
+            if (std::isnan(a)) x = b;
+            if (std::isnan(b)) x = a;
+            if (std::isnan(x)) {
+                x = bit_cast<float>(0x7FC00000U);
+            }
+            if (a == 0.0f && b == 0.0f && bit_cast<uint32_t>(a) != bit_cast<uint32_t>(b)) {
+                x = (bit_cast<uint32_t>(a) == bit_cast<uint32_t>(0.0f)) ? b : a;
+            }
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FMAXS: {
             feclearexcept(FE_ALL_EXCEPT);
-            float x = fmaxf(fltRegs.Read(ins.Rtyp.rs1), fltRegs.Read(ins.Rtyp.rs2));
+            float a = fltRegs.Read(ins.Rtyp.rs1);
+            float b = fltRegs.Read(ins.Rtyp.rs2);
+            float x = fmaxf(a, b);
             uint32_t flags = (bool(fetestexcept(FE_INEXACT))   << 0)
                            | (bool(fetestexcept(FE_UNDERFLOW)) << 1)
                            | (bool(fetestexcept(FE_OVERFLOW))  << 2)
                            | (bool(fetestexcept(FE_DIVBYZERO)) << 3)
                            | (bool(fetestexcept(FE_INVALID))   << 4);
+            // This matters because the bit patterns of NAN are implementation defined
+            if (std::isnan(a)) x = b;
+            if (std::isnan(b)) x = a;
+            if (std::isnan(x)) {
+                x = bit_cast<float>(0x7FC00000U);
+            }
+            // This matters because fminf(-0.0f, 0.0f) is implementation defined
+            if (a == 0.0f && b == 0.0f && bit_cast<uint32_t>(a) != bit_cast<uint32_t>(b)) {
+                x = (bit_cast<uint32_t>(a) == bit_cast<uint32_t>(0.0f)) ? a : b;
+            }
             csr.Write(CSR_fflags, flags);
-            if (std::isnan(x)) x = std::bit_cast<float>(0x7FC00000U);
             fltRegs.Write(ins.Rtyp.rd, x);
         }
         break; case InstructionType::FCVTWS: {
@@ -1159,13 +1184,13 @@ bool CPU::Step()
             float x = fltRegs.Read(ins.Rtyp.rs1);
             int32_t y = 0;
             uint32_t flags = 0;
-            if (std::isnan(x) || x > static_cast<float>(0x7FFFFFFF)) {
+            if (std::isnan(x) || x > static_cast<float>(INT_MAX)) {
                 flags |= 0b10000;
-                y = 0x7FFFFFFF;
+                y = INT_MAX;
             }
-            else if (x < static_cast<float>(0x80000000i32)) {
+            else if (x < static_cast<float>(INT_MIN)) {
                 flags |= 0b10000;
-                y = 0x80000000;
+                y = INT_MIN;
             }
             else y = static_cast<int32_t>(x);
             flags |= (bool(fetestexcept(FE_INEXACT))   << 0)
@@ -1181,9 +1206,9 @@ bool CPU::Step()
             float x = fltRegs.Read(ins.Rtyp.rs1);
             uint32_t y = 0;
             uint32_t flags = 0;
-            if (std::isnan(x) || x > static_cast<float>(0xFFFFFFFF))  {
+            if (std::isnan(x) || x > static_cast<float>(UINT_MAX))  {
                 flags |= 0b10000;
-                y = 0xFFFFFFFF;
+                y = UINT_MAX;
             }
             else if (x <= -1.0f)  {
                 flags |= 0b10000;
@@ -1198,7 +1223,7 @@ bool CPU::Step()
             csr.Write(CSR_fflags, flags);
             intRegs.Write(ins.Rtyp.rd, y);
         }
-        break; case InstructionType::FMVXW:   intRegs.Write(ins.Rtyp.rd, std::bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1)));
+        break; case InstructionType::FMVXW:   intRegs.Write(ins.Rtyp.rd, bit_cast<uint32_t>(fltRegs.Read(ins.Rtyp.rs1)));
         break; case InstructionType::FEQS: {
             feclearexcept(FE_ALL_EXCEPT);
             intRegs.Write(ins.Rtyp.rd, fltRegs.Read(ins.Rtyp.rs1) == fltRegs.Read(ins.Rtyp.rs2));
@@ -1237,7 +1262,7 @@ bool CPU::Step()
                 result = (x < 0.0f) ? 0 : 7;
             }
             else if (cls == FP_NAN) {
-                result = (std::bit_cast<uint32_t>(x) == 0x7FC00000U) ? 9 : 8;
+                result = (bit_cast<uint32_t>(x) == 0x7FC00000U) ? 9 : 8;
             }
             else if (cls == FP_NORMAL) {
                 result = (x < 0.0f) ? 1 : 6;
@@ -1252,7 +1277,7 @@ bool CPU::Step()
         }
         break; case InstructionType::FCVTSW:  fltRegs.Write(ins.Rtyp.rd, (float)intRegs.Read< int32_t>(ins.Rtyp.rs1));
         break; case InstructionType::FCVTSWU: fltRegs.Write(ins.Rtyp.rd, (float)intRegs.Read<uint32_t>(ins.Rtyp.rs1));
-        break; case InstructionType::FMVWX:   fltRegs.Write(ins.Rtyp.rd, std::bit_cast<float>(intRegs.Read<uint32_t>(ins.Rtyp.rs1)));
+        break; case InstructionType::FMVWX:   fltRegs.Write(ins.Rtyp.rd, bit_cast<float>(intRegs.Read<uint32_t>(ins.Rtyp.rs1)));
         break;
     }
     return true;

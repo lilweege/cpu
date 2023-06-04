@@ -1,99 +1,29 @@
 #include "cpu.hpp"
 #include "helpers.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_memory_editor.h"
+#define GL_SILENCE_DEPRECATION
+#include <GLFW/glfw3.h>
+
+#include "portable-file-dialogs.h"
+
 #include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <vector>
 
 
-
-CPU cpu;
-std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
-
-
-
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
-#include "imgui.h"
-// #include "imgui_internal.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_memory_editor.h"
-#include <stdio.h>
-#define GL_SILENCE_DEPRECATION
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
-
-
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-
-#include "portable-file-dialogs.h"
-
-struct Texture
-{
-    int width, height;
-    ImTextureID id;
-};
-
-typedef void (*ButtonPressCallback)();
-
-struct Button
-{
-    ButtonPressCallback callbackFunc;
-    Texture texture;
-};
-
-// Simple helper function to load an image into a OpenGL texture with common settings
-Texture LoadTextureFromFile(const char* filename)
-{
-    // Load from file
-    int image_width = 0;
-    int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-    IM_ASSERT(image_data != NULL);
-
-    // Create a OpenGL texture identifier
-    GLuint image_texture = 0;
-    glGenTextures(1, &image_texture);
-    glBindTexture(GL_TEXTURE_2D, image_texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP); // Same
-
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-
-    return Texture{
-        .width = image_width,
-        .height = image_height,
-        .id = (ImTextureID)(intptr_t)image_texture,
-    };
-}
-
-
-
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
+static CPU cpu;
+static std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
 
 
 static void FileOpenButtonPressed()
 {
-    std::vector<std::string> selectedFiles = pfd::open_file::open_file("Open a file").result();
+    auto dialog = pfd::open_file("Select RISC-V ELF file");
+    std::vector<std::string> selectedFiles = dialog.result();
     if (!selectedFiles.empty()) {
         std::vector<uint8_t> buffer = ReadEntireFile(selectedFiles[0]);
         ParseELFResult result = cpu.InitializeFromELF(buffer.data(), buffer.size());
@@ -144,11 +74,27 @@ static void DebugStepOutButtonPressed()
     printf("DebugStepOutButtonPressed!\n");
 }
 
+static void GLFWErrorCallback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
 static bool MemoryHighlightFn(const ImU8* data, size_t off)
 {
+    (void) data;
     return cpu.memory.didChange[off] || ((off & ~0b11) == cpu.pc);
 }
 
+
+typedef void (*ButtonPressCallback)();
+struct Button
+{
+    ButtonPressCallback callbackFunc;
+    Texture texture;
+};
+
+
+// #define DO_TESTS
 #ifdef DO_TESTS
 void DoTests();
 int main()
@@ -160,7 +106,7 @@ int main()
 {
 #endif
 
-    glfwSetErrorCallback(glfw_error_callback);
+    glfwSetErrorCallback(GLFWErrorCallback);
     if (!glfwInit())
         return 1;
 
@@ -219,6 +165,7 @@ int main()
     memEdit.ReadOnly = true;
     memEdit.HighlightFn = MemoryHighlightFn;
     memEdit.HighlightColor = highlightColor;
+    memEdit.OptShowAscii = false;
 
     while (!glfwWindowShouldClose(window)) {
         // Poll and handle events (inputs, window resize, etc.)
@@ -233,9 +180,7 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
         {
-
             ImGuiViewport* viewport = ImGui::GetMainViewport();
             ImGui::SetNextWindowPos(viewport->WorkPos);
             ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -255,13 +200,14 @@ int main()
             if (ImGui::Begin("Buttons")) {
                 for (size_t i = 0; i < numButtons; ++i) {
                     const Button& btn = buttons[i];
-                    if (ImGui::ImageButton(btn.texture.id, ImVec2(32, 32))) {
+                    if (ImGui::ImageButton((ImTextureID)(intptr_t)btn.texture.id, ImVec2(32, 32))) {
                         btn.callbackFunc();
                     }
                     ImGui::SameLine();
                 }
             }
             ImGui::End();
+
 
             if (ImGui::Begin("Code")) {
                 for (const auto& [addr, instruction] : readableObjectCode) {
@@ -272,7 +218,8 @@ int main()
                 }
             }
             ImGui::End();
-            
+
+
             if (ImGui::Begin("Registers")) {
                 for (uint32_t i = 0; i < cpu.intRegs.Size; ++i) {
                     {
@@ -287,7 +234,7 @@ int main()
                     ImGui::SameLine();
                     {
                         float y = cpu.fltRegs.Read(i);
-                        uint32_t x = std::bit_cast<uint32_t>(y);
+                        uint32_t x = bit_cast<uint32_t>(y);
                         bool didChange = cpu.fltRegs.didChange[i];
                         if (didChange) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
                         ImGui::Text("%*sx%u: %02X %02X %02X %02X  (%f)\n",
@@ -295,21 +242,19 @@ int main()
                         if (didChange) ImGui::PopStyleColor();
                     }
                 }
-                
-                ImGui::Text("pc: %02X %02X %02X %02X  (%d)\n",
-                    (cpu.pc >> 24) & 0xFF,
-                    (cpu.pc >> 16) & 0xFF,
-                    (cpu.pc >> 8) & 0xFF,
-                    (cpu.pc >> 0) & 0xFF, cpu.pc);
+
+                ImGui::NewLine();
+                ImGui::Text("pc:  %02X %02X %02X %02X  (%d)\n",
+                    (cpu.pc >> 24) & 0xFF, (cpu.pc >> 16) & 0xFF, (cpu.pc >> 8) & 0xFF, (cpu.pc >> 0) & 0xFF, cpu.pc);
                 uint32_t fcsr = cpu.csr.Read(CSR_fcsr);
                 ImGui::Text("       frm  NV DZ OF UF NX");
-                ImGui::Text("fcsr:  %d%d%d  %d  %d  %d  %d  %d",
+                ImGui::Text("fcsr:  %d%d%d   %d  %d  %d  %d  %d",
                     (fcsr >> 7) & 1, (fcsr >> 6) & 1, (fcsr >> 5) & 1, (fcsr >> 4) & 1, (fcsr >> 3) & 1, (fcsr >> 2) & 1, (fcsr >> 1) & 1, (fcsr >> 0) & 1);
             }
             ImGui::End();
 
+
             memEdit.DrawWindow("Memory", cpu.memory.buffer, cpu.memory.Size);
-            // ...
         }
 
         // Rendering
@@ -317,8 +262,6 @@ int main()
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        ImVec4 c = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        glClearColor(c.x * c.w, c.y * c.w, c.z * c.w, c.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
