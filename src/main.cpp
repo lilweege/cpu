@@ -231,7 +231,7 @@ static void TestISA()
         "riscv-tests/isa/rv32ui-p-blt",
         "riscv-tests/isa/rv32ui-p-bltu",
         "riscv-tests/isa/rv32ui-p-bne",
-        // "riscv-tests/isa/rv32ui-p-fence_i",
+        "riscv-tests/isa/rv32ui-p-fence_i",
         "riscv-tests/isa/rv32ui-p-jal",
         "riscv-tests/isa/rv32ui-p-jalr",
         "riscv-tests/isa/rv32ui-p-lb",
@@ -268,6 +268,17 @@ static void TestISA()
         "riscv-tests/isa/rv32um-p-remu",
         "riscv-tests/isa/rv32um-p-divu",
         "riscv-tests/isa/rv32um-p-div",
+        "riscv-tests/isa/rv32uf-p-fadd",
+        "riscv-tests/isa/rv32uf-p-recoding",
+        "riscv-tests/isa/rv32uf-p-move",
+        "riscv-tests/isa/rv32uf-p-ldst",
+        "riscv-tests/isa/rv32uf-p-fmin",
+        "riscv-tests/isa/rv32uf-p-fmadd",
+        "riscv-tests/isa/rv32uf-p-fcvt_w",
+        "riscv-tests/isa/rv32uf-p-fcvt",
+        "riscv-tests/isa/rv32uf-p-fcmp",
+        "riscv-tests/isa/rv32uf-p-fclass",
+        "riscv-tests/isa/rv32uf-p-fdiv",
     };
     int numFailed = 0;
     size_t numTests = sizeof(testNames) / sizeof(testNames[0]);
@@ -286,7 +297,7 @@ static void TestISA()
         uint32_t result = cpu.intRegs.Read(10);
         printf("Test %s: ", testName);
         if (result != 0) {
-            printf("FAILED (%d)\n", result);
+            printf("FAILED (%d)\n", result >> 1);
             ++numFailed;
         }
         else {
@@ -395,8 +406,9 @@ static void DebugRestartButtonPressed()
 
 static void DebugStepOverButtonPressed()
 {
-    memset(cpu.intRegs.didChange, false, cpu.intRegs.NumRegs);
-    memset(cpu.memory.didChange, false, cpu.memory.MemSize);
+    memset(cpu.intRegs.didChange, false, cpu.intRegs.Size);
+    memset(cpu.fltRegs.didChange, false, cpu.fltRegs.Size);
+    memset(cpu.memory.didChange, false, cpu.memory.Size);
     cpu.Step();
 }
 
@@ -412,7 +424,7 @@ static void DebugStepOutButtonPressed()
 
 static bool MemoryHighlightFn(const ImU8* data, size_t off)
 {
-    return cpu.memory.didChange[off];
+    return cpu.memory.didChange[off] || ((off & ~0b11) == cpu.pc);
 }
     
 
@@ -423,14 +435,16 @@ int main(int, char**)
     return 0;
 
     std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
-    readableObjectCode.reserve(cpu.memory.MemSize);
+    readableObjectCode.reserve(cpu.memory.Size);
     cpu.Reset();
     {
-        std::ifstream input("test/a.out", std::ios::binary);
+        // std::ifstream input("test/a.out", std::ios::binary);
+        std::ifstream input("riscv-tests/isa/rv32uf-p-fcvt_w", std::ios::binary);
+        
         std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
         cpu.InitializeFromELF(buffer.data(), buffer.size());
 
-        for (uint32_t i = 0; i+4 <= cpu.memory.MemSize; i += 4) {
+        for (uint32_t i = 0; i+4 <= cpu.memory.Size; i += 4) {
             uint32_t word = cpu.memory.Read<uint32_t>(i);
             if (DecodeInstruction(word) != InstructionType::ILLEGAL)
                 readableObjectCode.push_back({i, FormatInstruction(word)});
@@ -493,7 +507,6 @@ int main(int, char**)
     ImGui_ImplOpenGL3_Init(glsl_version);
     
 
-    uint32_t lastPc = 0;
     ImU32 highlightColor = IM_COL32(255, 0, 0, 255);
     MemoryEditor memEdit;
     memEdit.ReadOnly = true;
@@ -554,27 +567,41 @@ int main(int, char**)
             ImGui::End();
             
             if (ImGui::Begin("Registers")) {
-                for (uint32_t i = 0; i < cpu.intRegs.NumRegs; ++i) {
-                    uint32_t x = cpu.intRegs.Read(i);
-                    bool didChange = cpu.intRegs.didChange[i];
-                    if (didChange) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
-                    ImGui::Text("%*sx%u: %02X %02X %02X %02X  (%d)\n", i < 10, "", i, (x >> 24) & 0xFF, (x >> 16) & 0xFF, (x >> 8) & 0xFF, (x >> 0) & 0xFF, x);
-                    if (didChange) ImGui::PopStyleColor();
+                for (uint32_t i = 0; i < cpu.intRegs.Size; ++i) {
+                    {
+                        uint32_t x = cpu.intRegs.Read(i);
+                        bool didChange = cpu.intRegs.didChange[i];
+                        if (didChange) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
+                        int length = snprintf(NULL, 0, "%d", x);
+                        ImGui::Text("%*sx%u: %02X %02X %02X %02X  (%d)%*s",
+                            i < 10, "", i, (x >> 24) & 0xFF, (x >> 16) & 0xFF, (x >> 8) & 0xFF, (x >> 0) & 0xFF, x, 15-length, "");
+                        if (didChange) ImGui::PopStyleColor();
+                    }
+                    ImGui::SameLine();
+                    {
+                        float y = cpu.fltRegs.Read(i);
+                        uint32_t x = std::bit_cast<uint32_t>(y);
+                        bool didChange = cpu.fltRegs.didChange[i];
+                        if (didChange) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
+                        ImGui::Text("%*sx%u: %02X %02X %02X %02X  (%f)\n",
+                            i < 10, "", i, (x >> 24) & 0xFF, (x >> 16) & 0xFF, (x >> 8) & 0xFF, (x >> 0) & 0xFF, y);
+                        if (didChange) ImGui::PopStyleColor();
+                    }
                 }
                 
-                ImGui::Text("\n pc: %02X %02X %02X %02X  (%d)\n",
+                ImGui::Text("pc: %02X %02X %02X %02X  (%d)\n",
                     (cpu.pc >> 24) & 0xFF,
                     (cpu.pc >> 16) & 0xFF,
                     (cpu.pc >> 8) & 0xFF,
                     (cpu.pc >> 0) & 0xFF, cpu.pc);
+                uint32_t fcsr = cpu.csr.Read(CSR_fcsr);
+                ImGui::Text("       frm  NV DZ OF UF NX");
+                ImGui::Text("fcsr:  %d%d%d  %d  %d  %d  %d  %d",
+                    (fcsr >> 7) & 1, (fcsr >> 6) & 1, (fcsr >> 5) & 1, (fcsr >> 4) & 1, (fcsr >> 3) & 1, (fcsr >> 2) & 1, (fcsr >> 1) & 1, (fcsr >> 0) & 1);
             }
             ImGui::End();
 
-            memEdit.DrawWindow("Memory", cpu.memory.buffer, cpu.memory.MemSize);
-            if (lastPc != cpu.pc) {
-                memEdit.GotoAddrAndHighlight(cpu.pc, cpu.pc+4);
-                lastPc = cpu.pc;
-            }
+            memEdit.DrawWindow("Memory", cpu.memory.buffer, cpu.memory.Size);
             // ...
         }
 
