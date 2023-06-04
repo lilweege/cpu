@@ -8,8 +8,16 @@
 
 
 
-CPU cpu{};
+CPU cpu;
+std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
 
+
+static std::vector<uint8_t> ReadEntireFile(std::string_view filename)
+{
+    std::ifstream input(filename.data(), std::ios::binary);
+    std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
+    return buffer;
+}
 
 static void TestDecode()
 {
@@ -284,13 +292,9 @@ static void TestISA()
     size_t numTests = sizeof(testNames) / sizeof(testNames[0]);
     for (size_t i = 0; i < numTests; ++i) {
         const char* testName = testNames[i];
-        cpu.Reset();
-        {
-            std::ifstream input(testName, std::ios::binary);
-            std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
-            bool initOk = cpu.InitializeFromELF(buffer.data(), buffer.size());
-            assert(initOk);
-        }
+        auto buffer = ReadEntireFile(testName);
+        auto parseResult = cpu.InitializeFromELF(buffer.data(), buffer.size());
+        assert(parseResult == ParseELFResult::Ok);
 
         while (cpu.Step());
 
@@ -327,6 +331,8 @@ static void TestISA()
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+
+#include "portable-file-dialogs.h"
 
 struct Texture
 {
@@ -386,7 +392,22 @@ static void glfw_error_callback(int error, const char* description)
 
 static void FileOpenButtonPressed()
 {
-    printf("FileOpenButtonPressed!\n");
+    auto selectedFiles = pfd::open_file::open_file("Open a file").result();
+    if (!selectedFiles.empty()) {
+        auto buffer = ReadEntireFile(selectedFiles[0]);
+        ParseELFResult result = cpu.InitializeFromELF(buffer.data(), buffer.size());
+        if (result != ParseELFResult::Ok) {
+            pfd::message("Invalid ELF file", ParseELFResultMessage(result),
+                pfd::choice::ok, pfd::icon::error);
+        }
+    }
+    readableObjectCode.clear();
+    readableObjectCode.reserve(cpu.memory.Size);
+    for (uint32_t i = 0; i+4 <= cpu.memory.Size; i += 4) {
+        uint32_t word = cpu.memory.Read<uint32_t>(i);
+        if (DecodeInstruction(word) != InstructionType::ILLEGAL)
+            readableObjectCode.push_back({i, FormatInstruction(word)});
+    }
 }
 
 static void DebugStartButtonPressed()
@@ -431,26 +452,8 @@ static bool MemoryHighlightFn(const ImU8* data, size_t off)
 int main(int, char**)
 {
     // TestDecode();
-    TestISA();
-    return 0;
-
-    std::vector<std::pair<uint32_t, FormattedInstruction>> readableObjectCode;
-    readableObjectCode.reserve(cpu.memory.Size);
-    cpu.Reset();
-    {
-        // std::ifstream input("test/a.out", std::ios::binary);
-        std::ifstream input("riscv-tests/isa/rv32uf-p-fcvt_w", std::ios::binary);
-        
-        std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
-        cpu.InitializeFromELF(buffer.data(), buffer.size());
-
-        for (uint32_t i = 0; i+4 <= cpu.memory.Size; i += 4) {
-            uint32_t word = cpu.memory.Read<uint32_t>(i);
-            if (DecodeInstruction(word) != InstructionType::ILLEGAL)
-                readableObjectCode.push_back({i, FormatInstruction(word)});
-        }
-    }
-
+    // TestISA();
+    // return 0;
 
 
     glfwSetErrorCallback(glfw_error_callback);

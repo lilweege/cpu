@@ -756,7 +756,22 @@ void CPU::Reset()
     memset(&memory, 0, sizeof(memory));
 }
 
-bool CPU::InitializeFromELF(uint8_t* data, size_t size)
+const char* ParseELFResultMessage(ParseELFResult result)
+{
+    switch (result) {
+        case ParseELFResult::Ok: return "Success";
+        case ParseELFResult::WrongMagic: return "Missing ELF header";
+        case ParseELFResult::WrongClass: return "ELF file is not 32-bit";
+        case ParseELFResult::WrongData: return "ELF file is not little-endian";
+        case ParseELFResult::WrongType: return "ELF file is not executable";
+        case ParseELFResult::WrongMachine: return "ELF file targets wrong machine, expected RISC-V";
+        case ParseELFResult::WrongVersion: return "ELF file has wrong version, expected 1";
+        case ParseELFResult::NoEntry: return "ELF file does not specify entry point";
+    }
+    return "";
+}
+
+ParseELFResult CPU::InitializeFromELF(uint8_t* data, size_t size)
 {
     // ELF Header
     assert(sizeof(Elf32_Ehdr) < size);
@@ -768,41 +783,37 @@ bool CPU::InitializeFromELF(uint8_t* data, size_t size)
         header.e_ident[EI_MAG2] != ELFMAG2 ||
         header.e_ident[EI_MAG3] != ELFMAG3)
     {
-        fprintf(stderr, "Invalid ELF file\n");
-        return false;
+        return ParseELFResult::WrongMagic;
     }
 
     if (header.e_ident[EI_CLASS] != ELFCLASS32) {
-        fprintf(stderr, "ELF file is not 32-bit\n");
-        return false;
+        return ParseELFResult::WrongClass;
     }
 
     if (header.e_ident[EI_DATA] != ELFDATA2LSB) {
-        fprintf(stderr, "ELF file is not little-endian\n");
-        return false;
+        return ParseELFResult::WrongData;
     }
 
     // Rest of e_ident: version, OSABI, padding...
 
     if (header.e_type != ET_EXEC) {
-        fprintf(stderr, "ELF file is not executable\n");
-        return false;
+        return ParseELFResult::WrongType;
     }
 
     if (header.e_machine != EM_RISCV) {
-        fprintf(stderr, "ELF file targets wrong machine, expected RISC-V\n");
-        return false;
+        return ParseELFResult::WrongMachine;
     }
 
     if (header.e_version != EV_CURRENT) {
-        fprintf(stderr, "ELF file has wrong version, expected 1\n");
-        return false;
+        return ParseELFResult::WrongVersion;
     }
 
     if (header.e_entry == 0) {
-        fprintf(stderr, "ELF file does not specify entry point\n");
-        return false;
+        return ParseELFResult::NoEntry;
     }
+
+    // Parsed successfully...
+    Reset();
     pc = header.e_entry & ~0x80000000;
 
     assert(header.e_phoff == sizeof(Elf32_Ehdr));
@@ -865,7 +876,7 @@ bool CPU::InitializeFromELF(uint8_t* data, size_t size)
     free(sectionHeaders);
 #endif
 
-    return true;
+    return ParseELFResult::Ok;
 }
 
 
@@ -881,7 +892,7 @@ bool CPU::Step()
     uint32_t oldPc = pc;
     pc += 4;
     switch (type) {
-        default: printf("%s unimplemented", InstructionName(type)); exit(1);
+        default: fprintf(stderr, "%s unimplemented", InstructionName(type)); return false;
         break; case InstructionType::ADDI:  intRegs.Write(ins.Ityp.rd, intRegs.Read<uint32_t>(ins.Ityp.rs1) + SignExtend(ins.Ityp.imm11_0, 12));
         break; case InstructionType::SLTI:  intRegs.Write(ins.Ityp.rd, intRegs.Read< int32_t>(ins.Ityp.rs1) < SignExtend(ins.Ityp.imm11_0, 12));
         break; case InstructionType::SLTIU: intRegs.Write(ins.Ityp.rd, intRegs.Read<uint32_t>(ins.Ityp.rs1) < (uint32_t)SignExtend(ins.Ityp.imm11_0, 12));

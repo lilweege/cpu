@@ -612,12 +612,24 @@ static_assert(sizeof(RawInstruction) == 4);
 static_assert(std::is_trivial_v<RawInstruction>);
 
 
+enum class ParseELFResult : uint32_t
+{
+    Ok,
+    WrongMagic,
+    WrongClass,
+    WrongData,
+    WrongType,
+    WrongMachine,
+    WrongVersion,
+    NoEntry,
+};
+
 
 struct CPU
 {
 public:
     void Reset();
-    bool InitializeFromELF(uint8_t* data, size_t size);
+    ParseELFResult InitializeFromELF(uint8_t* data, size_t size);
     bool Step();
 public:
     uint32_t pc;
@@ -633,6 +645,7 @@ struct FormattedInstruction
     char buffer[32];
 };
 
+const char* ParseELFResultMessage(ParseELFResult result);
 const char* InstructionName(InstructionType type);
 void FormatInstruction(RawInstruction ins, char* buffer, size_t buffsz);
 FormattedInstruction FormatInstruction(RawInstruction ins);
