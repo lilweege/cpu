@@ -642,7 +642,9 @@ public:
 
 struct FormattedInstruction
 {
-    char buffer[32];
+    char buffer[64];
+    // The longest formatted instruction is (probably):
+    // fnmsub.s f30, f30, f30, f30, unknown
 };
 
 const char* ParseELFResultMessage(ParseELFResult result);
