@@ -347,6 +347,22 @@ static const char* CSRName(uint32_t immediate)
     }
 }
 
+static const char* RMName(uint32_t rm)
+{
+    switch (rm) {
+        case 0b000: return "rne"; // Round to Nearest, ties to Even
+        case 0b001: return "rtz"; // Round towards Zero
+        case 0b010: return "rdn"; // Round Down (towards −∞)
+        case 0b011: return "rup"; // Round Up (towards +∞)
+        case 0b100: return "rmm"; // Round to Nearest, ties to Max Magnitude
+        case 0b111: return "";
+        // case 0b111: return "dyn"; // In instruction’s rm field, selects dynamic rounding mode;
+        case 0b101:
+        case 0b110:
+        default: return "unknown";
+    }
+}
+
 void FormatInstruction(RawInstruction ins, char* buffer, size_t buffsz)
 {
     InstructionType type = DecodeInstruction(ins);
@@ -394,6 +410,14 @@ void FormatInstruction(RawInstruction ins, char* buffer, size_t buffsz)
         case InstructionType::SLL:
         case InstructionType::SRL:
         case InstructionType::SRA:
+        case InstructionType::MUL:
+        case InstructionType::MULH:
+        case InstructionType::MULHSU:
+        case InstructionType::MULHU:
+        case InstructionType::DIV:
+        case InstructionType::DIVU:
+        case InstructionType::REM:
+        case InstructionType::REMU:
             snprintf(buffer, buffsz, "%s x%d, x%d, x%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, ins.Rtyp.rs2);
             break;
         // J-type
@@ -437,6 +461,92 @@ void FormatInstruction(RawInstruction ins, char* buffer, size_t buffsz)
                 snprintf(buffer, buffsz, "%s x%d, %d, x%d", InstructionName(type), ins.Ityp.rd, ins.Ityp.imm11_0, ins.Ityp.rs1);
             }
         } break;
+        // I-type (float)
+        case InstructionType::FLW:
+            snprintf(buffer, buffsz, "%s f%d, %d(x%d)", InstructionName(type), ins.Ityp.rd, SignExtend(ins.Ityp.imm11_0, 12), ins.Ityp.rs1);
+            break;
+        // S-type (float)
+        case InstructionType::FSW:
+            snprintf(buffer, buffsz, "%s f%d, %d(x%d)", InstructionName(type), ins.Styp.rs2, SignExtend(ins.Styp.imm(), 12), ins.Ityp.rs1);
+            break;
+        // R-type (float)
+        case InstructionType::FSGNJS:
+        case InstructionType::FSGNJNS:
+        case InstructionType::FSGNJXS:
+        case InstructionType::FMINS:
+        case InstructionType::FMAXS:
+        case InstructionType::FEQS:
+        case InstructionType::FLTS:
+        case InstructionType::FLES:
+            snprintf(buffer, buffsz, "%s f%d, f%d, f%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, ins.Rtyp.rs2);
+            break;
+        // R4-type (f, f, f, f, rm)
+        case InstructionType::FMADDS:
+        case InstructionType::FMSUBS:
+        case InstructionType::FNMSUBS:
+        case InstructionType::FNMADDS: {
+            const char* rmRepr = RMName(ins.R4typ.funct3);
+            if (rmRepr[0] != '\0') {
+                snprintf(buffer, buffsz, "%s f%d, f%d, f%d, f%d, %s", InstructionName(type), ins.R4typ.rd, ins.R4typ.rs1, ins.R4typ.rs2, ins.R4typ.rs3, rmRepr);
+            }
+            else {
+                snprintf(buffer, buffsz, "%s f%d, f%d, f%d, f%d", InstructionName(type), ins.R4typ.rd, ins.R4typ.rs1, ins.R4typ.rs2, ins.R4typ.rs3);
+            }
+        } break;
+        // R-type (f, f, f, rm)
+        case InstructionType::FADDS:
+        case InstructionType::FSUBS:
+        case InstructionType::FMULS:
+        case InstructionType::FDIVS: {
+            const char* rmRepr = RMName(ins.Rtyp.funct3);
+            if (rmRepr[0] != '\0') {
+                snprintf(buffer, buffsz, "%s f%d, f%d, f%d, %s", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, ins.Rtyp.rs2, rmRepr);
+            }
+            else {
+                snprintf(buffer, buffsz, "%s f%d, f%d, f%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, ins.Rtyp.rs2);
+            }
+        } break;
+        // R-type (f, f, rm)
+        case InstructionType::FSQRTS: {
+            const char* rmRepr = RMName(ins.Rtyp.funct3);
+            if (rmRepr[0] != '\0') {
+                snprintf(buffer, buffsz, "%s f%d, f%d, %s", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, rmRepr);
+            }
+            else {
+                snprintf(buffer, buffsz, "%s f%d, f%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1);
+            }
+        } break;
+        // R-type (x, f, rm)
+        case InstructionType::FCVTWS:
+        case InstructionType::FCVTWUS: {
+            const char* rmRepr = RMName(ins.Rtyp.funct3);
+            if (rmRepr[0] != '\0') {
+                snprintf(buffer, buffsz, "%s x%d, f%d, %s", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, rmRepr);
+            }
+            else {
+                snprintf(buffer, buffsz, "%s x%d, f%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1);
+            }
+        } break;
+        // R-type (f, x, rm)
+        case InstructionType::FCVTSW:
+        case InstructionType::FCVTSWU: {
+            const char* rmRepr = RMName(ins.Rtyp.funct3);
+            if (rmRepr[0] != '\0') {
+                snprintf(buffer, buffsz, "%s f%d, x%d, %s", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1, rmRepr);
+            }
+            else {
+                snprintf(buffer, buffsz, "%s f%d, x%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1);
+            }
+        } break;
+        // R-type (x, f)
+        case InstructionType::FCLASSS:
+        case InstructionType::FMVXW:
+            snprintf(buffer, buffsz, "%s x%d, f%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1);
+            break;
+        // R-type (f, x)
+        case InstructionType::FMVWX:
+            snprintf(buffer, buffsz, "%s f%d, x%d", InstructionName(type), ins.Rtyp.rd, ins.Rtyp.rs1);
+            break;
     }
 
 }
