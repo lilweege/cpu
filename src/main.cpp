@@ -18,13 +18,12 @@
 
 struct Instruction
 {
-    FormattedInstruction instruction;
-    uint32_t address;
+    FormattedInstruction formatted;
     bool hasBreakpoint;
 };
 static CPU cpu;
 static CPU initialState{};
-static std::vector<Instruction> instructionListing;
+static std::map<uint32_t, Instruction> instructionListing;
 
 
 static void FileOpenButtonPressed()
@@ -40,11 +39,10 @@ static void FileOpenButtonPressed()
         }
     }
     instructionListing.clear();
-    instructionListing.reserve(cpu.memory.Size);
     for (uint32_t i = 0; i+4 <= cpu.memory.Size; i += 4) {
         uint32_t word = cpu.memory.Read<uint32_t>(i);
         if (DecodeInstruction(word) != InstructionType::ILLEGAL)
-            instructionListing.push_back({FormatInstruction(word), i, false});
+            instructionListing[i] = { FormatInstruction(word), false };
     }
     initialState = cpu;
 }
@@ -53,7 +51,8 @@ static void DebugStartButtonPressed()
 {
     while (true) {
         if (!cpu.Step()) break;
-        if (instructionListing[cpu.pc/4].hasBreakpoint) break;
+        if (auto it = instructionListing.find(cpu.pc); it != instructionListing.end())
+            if (it->second.hasBreakpoint) break;
     }
 }
 
@@ -221,14 +220,14 @@ int main()
 
 
             if (ImGui::Begin("Code")) {
-                for (auto& [instruction, address, hasBreakpoint] : instructionListing) {
+                for (auto& [address, instruction] : instructionListing) {
                     bool isCurrentInstruction = address == cpu.pc;
                     char buff[32];
                     snprintf(buff, sizeof(buff), "##%08X:", address);
-                    ImGui::Checkbox(buff, &hasBreakpoint);
+                    ImGui::Checkbox(buff, &instruction.hasBreakpoint);
                     ImGui::SameLine();
                     if (isCurrentInstruction) ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
-                    ImGui::Text("%08X: %s", address, instruction.buffer);
+                    ImGui::Text("%08X: %s", address, instruction.formatted.buffer);
                     if (isCurrentInstruction) ImGui::PopStyleColor();
                 }
             }
