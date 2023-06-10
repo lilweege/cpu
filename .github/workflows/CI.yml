@@ -11,16 +11,26 @@ jobs:
           submodules: 'true'
       - name: Install dependencies
         run: sudo apt install libglfw3-dev
-      - name: Compile
+      - name: Build
         run: chmod +x make.sh && ./make.sh -DDO_TESTS
-      - name: Test
+      - name: Run tests
         run: ./cpu.out
 
   Windows:
     runs-on: windows-2022
     steps:
-      - name: Test Windows
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - name: Install dependencies
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          cl
+          .\install.bat
+      - name: Build
+        shell: cmd
+        run: .\make.bat /DDO_TESTS
+      - name: Run tests
+        shell: cmd
+        run: .\cpu.exe
