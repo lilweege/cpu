@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   Linux:
-    runs-on: ubuntu-23.04
+    runs-on: ubuntu-latest
     steps:
       - name: Test Linux
         run: |
