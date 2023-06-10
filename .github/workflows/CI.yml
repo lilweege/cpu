@@ -1,0 +1,36 @@
+name: CI
+on: [push]
+
+jobs:
+  Linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - name: Install dependencies
+        run: sudo apt install libglfw3-dev
+      - name: Build
+        run: chmod +x make.sh && ./make.sh -DDO_TESTS
+      - name: Run tests
+        run: ./cpu.out
+
+  Windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - name: Install dependencies
+        shell: cmd
+        run: .\install.bat
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          .\make.bat /DDO_TESTS
+      - name: Run tests
+        shell: cmd
+        run: .\cpu.exe
