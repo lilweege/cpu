@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Test Linux
         run: |
-          echo "hello"
+          g++ --version
 
   Windows:
     runs-on: windows-2022
