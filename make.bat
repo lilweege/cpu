@@ -16,7 +16,7 @@ set INCLUDES=/Iexternal /I%IMGUI% /I%IMGUI%/backends /I%GLFW%/include /I%IMGUI_C
 set SOURCES=src/*.cpp %IMGUI%/backends/imgui_impl_glfw.cpp %IMGUI%/backends/imgui_impl_opengl3.cpp %IMGUI%/imgui*.cpp
 set LIBS=%GLFW%/lib-vc2022/glfw3.lib opengl32.lib gdi32.lib shell32.lib
 
-set CFLAGS=/nologo /TP /EHsc /std:c++20 /MD /W4 /wd4996 /wd4200 /Z7
+set CFLAGS=/nologo /TP /EHsc /std:c++20 /MD /W4 /wd4996 /wd4200 /Z7 %*
 
 @echo on
 call cl %CFLAGS% /utf-8 %INCLUDES% %SOURCES% /Fecpu /link %LIBS%

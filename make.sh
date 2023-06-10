@@ -9,7 +9,7 @@ INCLUDES="-Iexternal -I$IMGUI -I$IMGUI/backends -I$IMGUI_CLUB/imgui_memory_edito
 SOURCES="src/*.cpp $IMGUI/backends/imgui_impl_glfw.cpp $IMGUI/backends/imgui_impl_opengl3.cpp $IMGUI/imgui*.cpp"
 LIBS="-lglfw -lrt -lm -ldl -lGL"
 
-CFLAGS="-std=c++20 -g -Wall -Wextra -Wshadow -Wswitch-enum -Wpedantic -O2"
+CFLAGS="-std=c++20 -g -Wall -Wextra -Wshadow -Wswitch-enum -Wpedantic -O2 $@"
 
 set -xe
 
