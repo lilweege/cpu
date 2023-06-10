@@ -12,7 +12,7 @@ jobs:
       - name: Install dependencies
         run: sudo apt install libglfw3
       - name: Compile
-        run: ./make.sh -DDO_TESTS
+        run: chmod +x make.sh && ./make.sh -DDO_TESTS
       - name: Test
         run: ./cpu.out
 
