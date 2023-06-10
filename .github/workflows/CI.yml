@@ -5,9 +5,16 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Test Linux
-        run: |
-          g++ --version
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - name: Install dependencies
+        run: sudo apt install libglfw3
+      - name: Compile
+        run: ./make.sh -DDO_TESTS
+      - name: Test
+        run: ./cpu.out
 
   Windows:
     runs-on: windows-2022
