@@ -18,3 +18,4 @@ A 32-bit RISC-V emulator
     - [x] Step into
     - [ ] Step out
 - [ ] Fix rv32f (some operations are currently implementation defined, works on msvc and gcc but not clang)
+- [ ] Pipelining
