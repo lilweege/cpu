@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include "external_helpers.hpp"
 #include "helpers.hpp"
 
 #include "imgui.h"
@@ -104,18 +105,8 @@ struct Button
 };
 
 
-// #define DO_TESTS
-#ifdef DO_TESTS
-void DoTests();
 int main()
 {
-    DoTests();
-    return 0;
-#else
-int main()
-{
-#endif
-
     glfwSetErrorCallback(GLFWErrorCallback);
     if (!glfwInit())
         return 1;

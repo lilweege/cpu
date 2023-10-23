@@ -295,7 +295,7 @@ static void TestISA()
     assert(numFailed == 0);
 }
 
-void DoTests()
+int main()
 {
     TestDecode();
     TestISA();
